@@ -1,0 +1,5 @@
+*.zip filter=lfs diff=lfs merge=lfs -text
+*.csv filter=lfs diff=lfs merge=lfs -text
+Data/SPX[[:space:]]Option[[:space:]]Chain/SPX_Options_CLEANED.csv !text !filter !merge !diff
+Data/SPX[[:space:]]Option[[:space:]]Chain/SPX_Options_Data_2018_to_2023_MERGED.csv !text !filter !merge !diff
+Data/SPX[[:space:]]Option[[:space:]]Chain/SPX_Options_Data_2020_to_2023.csv !text !filter !merge !diff
