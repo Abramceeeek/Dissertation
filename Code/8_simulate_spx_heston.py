@@ -9,16 +9,16 @@ np.random.seed(42)
 
 # Heston model parameters
 S0 = 4500            # initial SPX level
-V0 = 0.04            # initial variance
+v0 = 0.8914          # initial variance
 mu = get_r_minus_q(
     '2018-01-03',
     'Data/Dividend Yield Data/SPX_Implied_Yield_Rates_2018_2023.csv',
-    'Data/Risk-Free Yield Curve/Interest_Rate_Curves_2018_2023.csv'
+    'Data/Risk-Free Yield Curve/Interest_Rate_Curves_2018_2023_CLEANED.csv'
 )                    # drift
-kappa = 2.0          # mean reversion speed
-theta = 0.04         # long-run variance
-sigma_v = 0.3        # vol of vol
-rho = -0.7           # correlation between W1 and W2
+kappa = 4.5387        # mean reversion speed
+theta = 1.4995       # long-run variance
+sigma_v = 3.9726        # vol of vol
+rho = 0.8825           # correlation between W1 and W2
 T = 7                # time horizon in years
 N = 252 * T          # number of steps
 dt = T / N
@@ -28,7 +28,7 @@ n_paths = 10000
 S = np.zeros((N + 1, n_paths))
 V = np.zeros((N + 1, n_paths))
 S[0] = S0
-V[0] = V0
+V[0] = v0
 
 # Generate correlated Brownian motions
 Z1 = np.random.normal(size=(N, n_paths))

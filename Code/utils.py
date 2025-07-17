@@ -19,6 +19,7 @@ def get_r_minus_q(sim_date, dividend_file, riskfree_file, maturity_days=365):
     # Find nearest date in risk-free data
     rf_rows = df_rf.iloc[(df_rf['date'] - pd.Timestamp(sim_date)).abs().argsort()[:1]]
     # Choose the maturity closest to desired (e.g. 1-year)
+    rf_rows = rf_rows.copy()
     rf_rows['abs_maturity'] = (rf_rows['maturity_days'] - maturity_days).abs()
     rf_row = rf_rows.iloc[rf_rows['abs_maturity'].argsort()[:1]]
     r = rf_row['rate'].values[0]
@@ -37,6 +38,7 @@ def get_r_for_discounting(sim_date, riskfree_file, maturity_days=365):
     
     # Find nearest date
     rf_rows = df_rf.iloc[(df_rf['date'] - pd.Timestamp(sim_date)).abs().argsort()[:1]]
+    rf_rows = rf_rows.copy()
     rf_rows['abs_maturity'] = (rf_rows['maturity_days'] - maturity_days).abs()
     rf_row = rf_rows.iloc[rf_rows['abs_maturity'].argsort()[:1]]
     r = rf_row['rate'].values[0]
