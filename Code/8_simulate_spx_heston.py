@@ -2,46 +2,31 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
-from utils import get_r_minus_q
+from rila.models import simulate_heston
+from rila.config import S0, n_paths, T, N, heston_params
 
+"""
+Simulate SPX paths under the Heston model using rila package modules.
+Saves all paths to CSV and plots a sample.
+"""
 # Set seed for reproducibility
-np.random.seed(42)
+seed = 42
 
 # Heston model parameters
-S0 = 4500            # initial SPX level
-v0 = 0.04            # initial variance (from calibration)
-mu = 0.01            # drift (set small for stability)
-kappa = 2.0          # mean reversion speed (from calibration)
-theta = 0.04         # long-run variance (from calibration)
-sigma_v = 0.3        # vol of vol (from calibration)
-rho = -0.7           # correlation between W1 and W2 (from calibration)
-T = 7                # time horizon in years
-N = 252 * T          # number of steps
-dt = T / N
-n_paths = 10000
+v0 = heston_params['v0']
+mu = 0.01  # For stability; can be replaced with get_r_minus_q if desired
+kappa = heston_params['kappa']
+theta = heston_params['theta']
+sigma_v = heston_params['sigma_v']
+rho = heston_params['rho']
 
-# Arrays to store results
-S = np.zeros((N + 1, n_paths))
-V = np.zeros((N + 1, n_paths))
-S[0] = S0
-V[0] = v0
-
-# Generate correlated Brownian motions
-Z1 = np.random.normal(size=(N, n_paths))
-Z2 = np.random.normal(size=(N, n_paths))
-W1 = Z1
-W2 = rho * Z1 + np.sqrt(1 - rho**2) * Z2
-
-for t in range(1, N + 1):
-    # Variance must stay positive
-    V[t] = np.abs(
-        V[t-1] + kappa * (theta - V[t-1]) * dt + sigma_v * np.sqrt(V[t-1]) * np.sqrt(dt) * W2[t-1]
-    )
-    
-    S[t] = S[t-1] * np.exp((mu - 0.5 * V[t-1]) * dt + np.sqrt(V[t-1]) * np.sqrt(dt) * W1[t-1])
+# Simulate paths
+S = simulate_heston(S0, v0, mu, kappa, theta, sigma_v, rho, T, N, n_paths, seed=seed)
 
 # Create a DataFrame with a few sample paths for plotting
-dates = pd.date_range(start="2023-01-01", periods=N + 1, freq="B")
+import datetime
+start_date = datetime.date(2023, 1, 1)
+dates = pd.bdate_range(start=start_date, periods=N + 1)
 sample_paths = pd.DataFrame(S[:, :10], index=dates)
 
 # Save the full path data for RILA simulation

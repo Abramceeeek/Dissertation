@@ -2,27 +2,19 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
-from hedging_utils import simulate_dynamic_hedge, analyze_hedging_performance
-from utils import apply_rila_payoff, get_r_for_discounting
+from rila.hedging import simulate_dynamic_hedge, analyze_hedging_performance
+from rila.payoff import apply_rila_payoff
+from rila.config import S0, buffer_level, cap_level, n_paths, T
 
+"""
+Dynamic hedging simulation for RILA under different models using rila package modules.
+Loads simulated paths, runs dynamic hedging, analyzes and plots results.
+"""
 # Set seed for reproducibility
 np.random.seed(42)
 
-def run_hedging_simulation(model_name, paths_file, buffer=0.1, cap=0.5):
-    """
-    Run dynamic hedging simulation for a given model.
-    
-    Parameters:
-    - model_name: name of the model ('Heston', 'GBM', 'RoughVol')
-    - paths_file: path to the simulated price paths CSV
-    - buffer: RILA buffer level
-    - cap: RILA cap level
-    
-    Returns:
-    - results: dictionary with hedging results
-    """
+def run_hedging_simulation(model_name, paths_file, buffer=buffer_level, cap=cap_level):
     print(f"\nRunning dynamic hedging simulation for {model_name}...")
-    
     # Load simulated paths
     try:
         paths_df = pd.read_csv(paths_file, index_col=0)
@@ -30,118 +22,81 @@ def run_hedging_simulation(model_name, paths_file, buffer=0.1, cap=0.5):
     except FileNotFoundError:
         print(f"Could not find paths file: {paths_file}")
         return None
-    
-    # Parameters
-    S0 = price_paths[0, 0]  # Initial price from simulation
+    S0_local = price_paths[0, 0]  # Initial price from simulation
     r = 0.02  # Risk-free rate (simplified)
     q = 0.01  # Dividend yield (simplified)
     sigma = 0.2  # Hedging volatility assumption
-    
-    print(f"  Initial S0: {S0:.2f}")
-    print(f"  Number of paths: {price_paths.shape[1]}")
-    print(f"  Number of time steps: {price_paths.shape[0]-1}")
-    
     # Calculate unhedged liability distribution
-    final_returns = (price_paths[-1, :] - S0) / S0
+    final_returns = (price_paths[-1, :] - S0_local) / S0_local
     credited_returns = apply_rila_payoff(final_returns, buffer, cap)
-    unhedged_liability = S0 * (1 + credited_returns)
-    unhedged_pnl = S0 - unhedged_liability  # P&L from insurer perspective
-    
+    unhedged_liability = S0_local * (1 + credited_returns)
+    unhedged_pnl = S0_local - unhedged_liability  # P&L from insurer perspective
     # Run hedging simulations with different rebalancing frequencies
     rebalance_frequencies = {
         'Daily': 1,
         'Weekly': 5,
         'Monthly': 21
     }
-    
     results = {
         'model': model_name,
         'unhedged_stats': analyze_hedging_performance(unhedged_pnl),
         'hedged_results': {}
     }
-    
     for freq_name, freq_value in rebalance_frequencies.items():
         print(f"  Simulating {freq_name.lower()} rebalancing...")
-        
-        # Run hedging simulation
         hedge_pnl, hedge_portfolio = simulate_dynamic_hedge(
-            price_paths, S0, r, q, sigma, buffer, cap, 
+            price_paths, S0_local, r, q, sigma, buffer, cap, 
             rebalance_freq=freq_value, transaction_cost=0.001
         )
-        
-        # Analyze performance
         hedge_stats = analyze_hedging_performance(hedge_pnl, unhedged_pnl)
         results['hedged_results'][freq_name] = {
             'stats': hedge_stats,
             'pnl_distribution': hedge_pnl
         }
-        
         print(f"    Mean P&L: ${hedge_stats['mean_pnl']:.2f}")
         print(f"    P&L Std: ${hedge_stats['std_pnl']:.2f}")
         print(f"    95% VaR: ${hedge_stats['var_95']:.2f}")
-    
     return results
 
 def plot_hedging_results(results, save_dir='Output/plots'):
-    """
-    Create comprehensive plots of hedging results.
-    """
     model_name = results['model']
     os.makedirs(save_dir, exist_ok=True)
-    
-    # 1. Hedging P&L distributions comparison
     fig, axes = plt.subplots(2, 2, figsize=(15, 12))
-    
-    # Unhedged distribution
-    unhedged_pnl = results['unhedged_stats']
     axes[0, 0].hist(results['hedged_results']['Daily']['pnl_distribution'], 
                     bins=50, alpha=0.7, label='Unhedged', density=True)
     axes[0, 0].set_title(f'{model_name}: Unhedged vs Hedged P&L')
     axes[0, 0].set_xlabel('P&L ($)')
     axes[0, 0].set_ylabel('Density')
     axes[0, 0].grid(True)
-    
-    # Daily hedging
     daily_pnl = results['hedged_results']['Daily']['pnl_distribution']
     axes[0, 1].hist(daily_pnl, bins=50, alpha=0.7, color='green', density=True)
     axes[0, 1].set_title(f'{model_name}: Daily Hedging P&L')
     axes[0, 1].set_xlabel('P&L ($)')
     axes[0, 1].set_ylabel('Density')
     axes[0, 1].grid(True)
-    
-    # Weekly hedging
     weekly_pnl = results['hedged_results']['Weekly']['pnl_distribution']
     axes[1, 0].hist(weekly_pnl, bins=50, alpha=0.7, color='orange', density=True)
     axes[1, 0].set_title(f'{model_name}: Weekly Hedging P&L')
     axes[1, 0].set_xlabel('P&L ($)')
     axes[1, 0].set_ylabel('Density')
     axes[1, 0].grid(True)
-    
-    # Monthly hedging
     monthly_pnl = results['hedged_results']['Monthly']['pnl_distribution']
     axes[1, 1].hist(monthly_pnl, bins=50, alpha=0.7, color='red', density=True)
     axes[1, 1].set_title(f'{model_name}: Monthly Hedging P&L')
     axes[1, 1].set_xlabel('P&L ($)')
     axes[1, 1].set_ylabel('Density')
     axes[1, 1].grid(True)
-    
     plt.tight_layout()
     plt.savefig(f'{save_dir}/hedging_pnl_distributions_{model_name.lower()}.png', dpi=300, bbox_inches='tight')
     plt.show()
-    
-    # 2. Risk metrics comparison
     fig, ax = plt.subplots(1, 1, figsize=(12, 8))
-    
     metrics = ['var_95', 'var_99', 'cte_95', 'std_pnl']
     freq_names = ['Daily', 'Weekly', 'Monthly']
-    
     x = np.arange(len(metrics))
     width = 0.25
-    
     for i, freq in enumerate(freq_names):
         values = [results['hedged_results'][freq]['stats'][metric] for metric in metrics]
         ax.bar(x + i*width, values, width, label=f'{freq} Rebalancing')
-    
     ax.set_xlabel('Risk Metrics')
     ax.set_ylabel('Value ($)')
     ax.set_title(f'{model_name}: Risk Metrics by Rebalancing Frequency')
@@ -149,23 +104,15 @@ def plot_hedging_results(results, save_dir='Output/plots'):
     ax.set_xticklabels(['95% VaR', '99% VaR', '95% CTE', 'Std Dev'])
     ax.legend()
     ax.grid(True, alpha=0.3)
-    
     plt.savefig(f'{save_dir}/risk_metrics_comparison_{model_name.lower()}.png', dpi=300, bbox_inches='tight')
     plt.show()
 
 def create_summary_table(all_results):
-    """
-    Create a summary table comparing all models and hedging strategies.
-    """
     summary_data = []
-    
     for model_results in all_results:
         if model_results is None:
             continue
-            
         model_name = model_results['model']
-        
-        # Unhedged metrics
         unhedged = model_results['unhedged_stats']
         summary_data.append({
             'Model': model_name,
@@ -177,8 +124,6 @@ def create_summary_table(all_results):
             '95% CTE': unhedged['cte_95'],
             'Prob(Loss)': unhedged['prob_loss']
         })
-        
-        # Hedged metrics
         for freq_name in ['Daily', 'Weekly', 'Monthly']:
             hedged = model_results['hedged_results'][freq_name]['stats']
             summary_data.append({
@@ -191,20 +136,9 @@ def create_summary_table(all_results):
                 '95% CTE': hedged['cte_95'],
                 'Prob(Loss)': hedged['prob_loss']
             })
-    
     summary_df = pd.DataFrame(summary_data)
-    
-    # Save to CSV
     os.makedirs('Output', exist_ok=True)
     summary_df.to_csv('Output/hedging_summary_table.csv', index=False, float_format='%.4f')
-    
-    print("\n" + "="*80)
-    print("HEDGING PERFORMANCE SUMMARY")
-    print("="*80)
-    print(summary_df.round(4).to_string(index=False))
-    print("="*80)
-    
-    return summary_df
 
 # Main execution
 if __name__ == "__main__":
@@ -216,20 +150,20 @@ if __name__ == "__main__":
         {
             'name': 'Heston',
             'paths_file': 'Output/simulations/SPX_Heston_paths.csv',
-            'buffer': 0.1,
-            'cap': 0.5
+            'buffer': buffer_level,
+            'cap': cap_level
         },
         {
             'name': 'GBM',
             'paths_file': 'Output/simulations/SPX_GBM_paths.csv',
-            'buffer': 0.1,
+            'buffer': buffer_level,
             'cap': 0.12
         },
         {
             'name': 'RoughVol',
             'paths_file': 'Output/simulations/SPX_RoughVol_paths.csv',
-            'buffer': 0.1,
-            'cap': 0.5
+            'buffer': buffer_level,
+            'cap': cap_level
         }
     ]
     
