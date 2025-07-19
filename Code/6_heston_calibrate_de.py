@@ -61,11 +61,11 @@ def calibration_loss(params, data):
 
 # ✅ Define bounds (wider for exploration)
 bounds = [
-    (0.0001, 1.5),    # v0
-    (0.05, 12.0),     # kappa
-    (0.0001, 1.5),    # theta
-    (0.01, 4.0),      # sigma_v
-    (-0.999, 0.999)   # rho
+    (0.01, 0.2),     # v0
+    (0.1, 5.0),      # kappa
+    (0.01, 0.2),     # theta
+    (0.01, 1.0),     # sigma_v
+    (-0.99, 0.0),    # rho — negative is realistic
 ]
 
 # ✅ Run global optimizer

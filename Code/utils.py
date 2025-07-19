@@ -29,19 +29,94 @@ def get_r_minus_q(sim_date, dividend_file, riskfree_file, maturity_days=365):
     return r - q
 
 
-def get_r_for_discounting(sim_date, riskfree_file, maturity_days=365):
+import pandas as pd
+import numpy as np
+
+def apply_rila_payoff(returns, buffer=0.1, cap=0.5, participation=1.0):
     """
-    Returns risk-free rate for a given simulation date and term (for discounting).
+    Apply RILA (Registered Index-Linked Annuity) payoff logic to returns.
+    
+    Parameters:
+    - returns: array of raw returns (S_T/S_0 - 1)
+    - buffer: downside buffer level (e.g., 0.1 for 10% buffer)
+    - cap: upside cap level (e.g., 0.5 for 50% cap)
+    - participation: participation rate (typically 1.0)
+    
+    Returns:
+    - credited_returns: array of credited returns after applying buffer and cap
     """
-    df_rf = pd.read_csv(riskfree_file)
-    df_rf['date'] = pd.to_datetime(df_rf['date'])
+    returns = np.array(returns)
+    credited_returns = np.zeros_like(returns)
     
-    # Find nearest date
-    rf_rows = df_rf.iloc[(df_rf['date'] - pd.Timestamp(sim_date)).abs().argsort()[:1]]
-    rf_rows = rf_rows.copy()
-    rf_rows['abs_maturity'] = (rf_rows['maturity_days'] - maturity_days).abs()
-    rf_row = rf_rows.iloc[rf_rows['abs_maturity'].argsort()[:1]]
-    r = rf_row['rate'].values[0]
+    # Positive returns: apply cap
+    positive_mask = returns >= 0
+    credited_returns[positive_mask] = np.minimum(returns[positive_mask], cap) * participation
     
-    print(f"✅ For {sim_date}: Risk-free rate for discounting ≈ {r:.4f}")
-    return r
+    # Negative returns: apply buffer
+    negative_mask = returns < 0
+    loss_magnitude = np.abs(returns[negative_mask])
+    
+    # Within buffer: no loss
+    within_buffer_mask = negative_mask & (np.abs(returns) <= buffer)
+    credited_returns[within_buffer_mask] = 0
+    
+    # Beyond buffer: loss minus buffer amount
+    beyond_buffer_mask = negative_mask & (np.abs(returns) > buffer)
+    credited_returns[beyond_buffer_mask] = (returns[beyond_buffer_mask] + buffer) * participation
+    
+    return credited_returns
+
+def apply_annual_rila_payoff(annual_returns, buffer=0.1, cap=0.12, participation=1.0, fee_rate=0.01):
+    """
+    Apply annual RILA logic with yearly resets and fees.
+    
+    Parameters:
+    - annual_returns: 2D array of shape (n_years, n_paths) with yearly returns
+    - buffer: annual downside buffer
+    - cap: annual upside cap
+    - participation: participation rate
+    - fee_rate: annual fee rate
+    
+    Returns:
+    - final_account_values: final account values after all years
+    """
+    n_years, n_paths = annual_returns.shape
+    account_values = np.ones(n_paths)  # Start with $1
+    
+    for year in range(n_years):
+        year_returns = annual_returns[year, :]
+        
+        # Apply RILA logic for this year
+        credited_returns = apply_rila_payoff(year_returns, buffer, cap, participation)
+        
+        # Update account values
+        account_values *= (1 + credited_returns)
+        
+        # Apply annual fee
+        account_values *= (1 - fee_rate)
+    
+    return account_values
+
+def get_r_for_discounting(target_date, rf_path, maturity_days=7*365):
+    rf_df = pd.read_csv(rf_path)
+    rf_df['date'] = pd.to_datetime(rf_df['date'])
+    target_date = pd.to_datetime(target_date)
+
+    # Check if the days column exists
+    if 'days' not in rf_df.columns:
+        raise KeyError("The column 'days' is missing in the interest rate data.")
+
+    # Find the rows for the given date
+    rf_rows = rf_df[rf_df['date'] == target_date]
+
+    if rf_rows.empty:
+        # fallback: find the closest date instead
+        closest_date = rf_df['date'].iloc[(rf_df['date'] - target_date).abs().argsort().iloc[0]]
+        print(f"[INFO] No data for {target_date.date()}, using closest available date: {closest_date.date()}")
+        rf_rows = rf_df[rf_df['date'] == closest_date]
+
+    # Calculate absolute difference to find nearest maturity
+    rf_rows['abs_maturity'] = (rf_rows['days'] - maturity_days).abs()
+
+    best_row = rf_rows.loc[rf_rows['abs_maturity'].idxmin()]
+    return best_row['rate']

@@ -63,11 +63,11 @@ initial_params = [0.04, 2.0, 0.04, 0.3, -0.7]
 
 # ✅ BOUNDS
 bounds = [
-    (0.0001, 2.0),    # v0
-    (0.1, 10.0),      # kappa
-    (0.0001, 2.0),    # theta
-    (0.01, 5.0),      # sigma_v
-    (-0.999, 0.999)   # rho
+    (0.01, 0.2),     # v0
+    (0.1, 5.0),      # kappa
+    (0.01, 0.2),     # theta
+    (0.01, 1.0),     # sigma_v
+    (-0.99, 0.0),    # rho — negative is realistic
 ]
 
 # ✅ RUN OPTIMIZER

@@ -39,6 +39,9 @@ paths[:, 0] = S0
 print("⏳ Simulating rough volatility paths...")
 
 for i in range(n_paths):
+    if i % 1000 == 0:
+        print(f"  Progress: {i}/{n_paths} paths completed...")
+    
     # Fractional Brownian motion
     f = FBM(n=n_steps, hurst=H, length=T, method='daviesharte')
     W_H = f.fbm()
@@ -46,13 +49,16 @@ for i in range(n_paths):
     # Rough volatility path
     v_t = xi_0 * np.exp(eta * W_H - 0.5 * eta**2 * t**(2 * H))
     
-    # Brownian motion for asset
+    # Brownian motion for asset (vectorized)
     dW = np.random.normal(0, np.sqrt(dt), n_steps)
     
-    for j in range(n_steps):
-        drift_adj = (mu - 0.5 * v_t[j]) * dt
-        diffusion = np.sqrt(v_t[j]) * dW[j]
-        paths[i, j + 1] = paths[i, j] * np.exp(drift_adj + diffusion)
+    # Vectorized asset price simulation
+    drift_adj = (mu - 0.5 * v_t[:-1]) * dt
+    diffusion = np.sqrt(v_t[:-1]) * dW
+    log_returns = drift_adj + diffusion
+    
+    # Use cumulative sum and exp for path generation
+    paths[i, 1:] = S0 * np.exp(np.cumsum(log_returns))
 
 print("✅ Simulation done. Saving sample plot...")
 

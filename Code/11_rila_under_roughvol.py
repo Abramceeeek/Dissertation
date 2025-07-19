@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
-from utils import get_r_for_discounting
+from utils import get_r_for_discounting, apply_rila_payoff
 
 # Load simulated SPX paths under rough volatility
 spx_paths = pd.read_csv('Output/simulations/SPX_RoughVol_paths.csv', index_col=0)
@@ -11,28 +11,20 @@ spx_paths = pd.read_csv('Output/simulations/SPX_RoughVol_paths.csv', index_col=0
 initial_investment = 1000
 term_years = 7
 buffer = 0.10        # 10% downside buffer
-cap = 0.50            # 50% upside cap
-reset_annually = False  # Assume single-term for now
+cap = 0.50           # 50% upside cap
 
-final_values = []
+# Extract start and end values
+start_values = spx_paths.iloc[0].values
+end_values = spx_paths.iloc[-1].values
 
-for i in range(spx_paths.shape[1]):
-    path = spx_paths.iloc[:, i]
-    start = path.iloc[0]
-    end = path.iloc[-1]
-    ret = (end - start) / start
+# Calculate returns
+returns = (end_values - start_values) / start_values
 
-    # Apply RILA logic with buffer and cap
-    if ret >= 0:
-        credited = min(ret, cap)
-    else:
-        if abs(ret) <= buffer:
-            credited = 0
-        else:
-            credited = ret + buffer  # loss beyond the buffer
+# Apply RILA payoff logic using utility function
+credited_returns = apply_rila_payoff(returns, buffer, cap)
 
-    final_account = initial_investment * (1 + credited)
-    final_values.append(final_account)
+# Calculate final account values
+final_values = initial_investment * (1 + credited_returns)
 
 # Get discount rate
 r_discount = get_r_for_discounting(
