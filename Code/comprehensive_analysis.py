@@ -6,20 +6,17 @@ from hedging_utils import simulate_dynamic_hedge, analyze_hedging_performance
 from utils import apply_rila_payoff
 
 def run_complete_analysis():
-    """Run comprehensive analysis across all models with hedging."""
-    
     print("="*60)
     print("COMPREHENSIVE RILA HEDGING ANALYSIS")
     print("="*60)
     
-    # Model configurations
     models = [
         {
             'name': 'Heston',
             'file': 'Output/simulations/SPX_Heston_paths.csv',
             'buffer': 0.1,
             'cap': 0.5,
-            'max_paths': 2000  # Limit for performance
+            'max_paths': 2000
         },
         {
             'name': 'GBM', 
@@ -45,7 +42,6 @@ def run_complete_analysis():
         print("-" * 40)
         
         try:
-            # Load paths
             paths_df = pd.read_csv(model['file'], index_col=0)
             n_paths = min(model['max_paths'], paths_df.shape[1])
             price_paths = paths_df.iloc[:, :n_paths].values
@@ -53,17 +49,14 @@ def run_complete_analysis():
             S0 = price_paths[0, 0]
             print(f"  Loaded {n_paths} paths, S0 = ${S0:.2f}")
             
-            # Calculate unhedged outcomes
             final_returns = (price_paths[-1, :] - S0) / S0
             credited_returns = apply_rila_payoff(final_returns, model['buffer'], model['cap'])
             unhedged_liability = S0 * (1 + credited_returns)
             unhedged_pnl = S0 - unhedged_liability
             
-            # Analyze unhedged risk
             unhedged_stats = analyze_hedging_performance(unhedged_pnl)
             print(f"  Unhedged - Mean P&L: ${unhedged_stats['mean_pnl']:.2f}, Std: ${unhedged_stats['std_pnl']:.2f}")
             
-            # Hedging analysis with different frequencies
             hedge_frequencies = {'Daily': 1, 'Weekly': 5, 'Monthly': 21}
             hedge_results = {}
             
@@ -82,8 +75,7 @@ def run_complete_analysis():
                 print(f"    {freq_name} - Mean P&L: ${hedge_stats['mean_pnl']:.2f}, " +
                       f"Std: ${hedge_stats['std_pnl']:.2f}, " +
                       f"Risk Reduction: {hedge_stats.get('risk_reduction_std', 0)*100:.1f}%")
-            
-            # Store results
+        
             model_result = {
                 'model': model['name'],
                 'unhedged': unhedged_stats,
@@ -92,7 +84,6 @@ def run_complete_analysis():
             }
             all_model_results[model['name']] = model_result
             
-            # Add to summary
             for strategy in ['Unhedged'] + list(hedge_frequencies.keys()):
                 if strategy == 'Unhedged':
                     stats = unhedged_stats
@@ -115,34 +106,26 @@ def run_complete_analysis():
             print(f"  Error processing {model['name']}: {e}")
             continue
     
-    # Create summary table
     summary_df = pd.DataFrame(results_summary)
     
-    # Save results
     os.makedirs('Output', exist_ok=True)
     summary_df.to_csv('Output/comprehensive_hedging_analysis.csv', index=False, float_format='%.2f')
     
-    # Print summary
     print("\n" + "="*80)
     print("COMPREHENSIVE ANALYSIS SUMMARY")
     print("="*80)
     print(summary_df.round(2).to_string(index=False))
     
-    # Create visualizations
     create_summary_plots(all_model_results)
     
     return summary_df, all_model_results
 
 def create_summary_plots(all_results):
-    """Create comprehensive comparison plots."""
-    
-    # 1. Risk reduction comparison
     fig, axes = plt.subplots(2, 2, figsize=(15, 12))
     
     models = list(all_results.keys())
     strategies = ['Daily', 'Weekly', 'Monthly']
     
-    # VaR comparison
     ax = axes[0, 0]
     x = np.arange(len(models))
     width = 0.2
@@ -166,7 +149,6 @@ def create_summary_plots(all_results):
     ax.legend()
     ax.grid(True, alpha=0.3)
     
-    # Standard deviation comparison
     ax = axes[0, 1]
     unhedged_stds = []
     hedged_stds = []
@@ -193,7 +175,6 @@ def create_summary_plots(all_results):
     ax.legend()
     ax.grid(True, alpha=0.3)
     
-    # Risk reduction percentages
     ax = axes[1, 0]
     risk_reductions = []
     for model in models:
@@ -209,13 +190,11 @@ def create_summary_plots(all_results):
     ax.set_title('Risk Reduction from Daily Hedging')
     ax.grid(True, alpha=0.3)
     
-    # Add value labels on bars
     for bar, value in zip(bars, risk_reductions):
         if value > 0:
             ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 1,
                    f'{value:.1f}%', ha='center', va='bottom')
     
-    # Mean P&L comparison
     ax = axes[1, 1]
     mean_pnls = []
     for model in models:

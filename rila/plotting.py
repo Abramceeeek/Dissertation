@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 
 def plot_cdf(data, label=None, color='blue', xlabel='Value', title='CDF', save_path=None):
     data = np.sort(data)
@@ -29,7 +30,6 @@ def plot_capital_bar_chart(capital_dict, title='Capital Requirement Comparison',
     plt.show()
 
 def plot_worst_case_path(paths, final_accounts, n=1, title='Worst-Case Paths', save_path=None):
-    # Find indices of n worst final accounts
     idx = np.argsort(final_accounts)[:n]
     plt.figure(figsize=(10, 6))
     for i in idx:
@@ -39,6 +39,20 @@ def plot_worst_case_path(paths, final_accounts, n=1, title='Worst-Case Paths', s
     plt.title(title)
     plt.legend()
     plt.grid(True)
+    if save_path:
+        plt.savefig(save_path, bbox_inches='tight')
+    plt.show()
+
+def plot_scr_comparison(summary_df: pd.DataFrame, save_path=None):
+    df = summary_df[summary_df['Strategy'] != 'Unhedged']
+    plt.figure(figsize=(10, 6))
+    for model in df['Model'].unique():
+        subset = df[df['Model'] == model]
+        plt.bar(subset['Strategy'] + f' ({model})', subset['SCR (99.5% CTE)'], label=model)
+    plt.ylabel('SCR (99.5% CTE)')
+    plt.title('Solvency Capital Requirement Comparison')
+    plt.xticks(rotation=45, ha='right')
+    plt.tight_layout()
     if save_path:
         plt.savefig(save_path, bbox_inches='tight')
     plt.show() 

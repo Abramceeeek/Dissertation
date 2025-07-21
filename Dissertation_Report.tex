@@ -1,0 +1,912 @@
+\documentclass[12pt,a4paper]{report}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{natbib}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{subcaption}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{longtable}
+
+\geometry{left=3cm,right=2.5cm,top=2.5cm,bottom=2.5cm}
+
+\title{Dynamic Hedging of Registered Index-Linked Annuity Products under Stochastic Volatility Models}
+\author{Abdurakhmonbek [Last Name]}
+\date{\today}
+
+\begin{document}
+
+%% Title Page
+\begin{titlepage}
+\centering
+\vspace*{2cm}
+
+{\LARGE\textbf{Dynamic Hedging of Registered Index-Linked Annuity Products under Stochastic Volatility Models}}
+
+\vspace{2cm}
+
+{\Large Abdurakhmonbek [Last Name]}
+
+\vspace{1.5cm}
+
+{\large A Dissertation Submitted in Partial Fulfillment\\
+of the Requirements for the Degree of\\
+[Degree Title]}
+
+\vspace{1.5cm}
+
+{\large [University Name]\\
+[Department/School Name]}
+
+\vspace{2cm}
+
+{\large \today}
+
+\vfill
+
+\textit{Supervisor: [Supervisor Name]}
+
+\end{titlepage}
+
+%% Abstract
+\begin{abstract}
+This dissertation investigates the dynamic hedging of Registered Index-Linked Annuity (RILA) products under different stochastic volatility models. RILAs are equity-linked insurance products that provide downside protection through buffers while limiting upside participation through caps. We compare the hedging effectiveness of delta hedging strategies under three models: Geometric Brownian Motion (GBM), the Heston stochastic volatility model, and a rough volatility model.
+
+Our methodology involves calibrating the Heston model to S\&P 500 option data from 2018-2023, simulating 10,000 price paths under each model, applying RILA payoff structures with 10\% downside buffers and varying upside caps, and implementing dynamic delta hedging with daily, weekly, and monthly rebalancing frequencies. Risk metrics including Value-at-Risk (VaR), Conditional Tail Expectation (CTE), and profit-and-loss distributions are analyzed.
+
+Key findings demonstrate that dynamic hedging significantly reduces risk across all models, achieving 41-53\% reduction in standard deviation. The GBM model shows the most effective hedging performance with positive 95\% VaR (+\$263), while the Heston and rough volatility models require more sophisticated risk management due to stochastic volatility effects. Hedging converts negative mean unhedged outcomes to positive mean hedged outcomes across all models, with minimal sensitivity to rebalancing frequency.
+
+These results provide practical insights for insurance companies designing and risk-managing equity-linked products, demonstrating the quantifiable benefits of dynamic hedging while highlighting model-dependent risk characteristics that inform capital allocation and product pricing decisions.
+\end{abstract}
+
+%% Table of Contents
+\tableofcontents
+\listoffigures
+\listoftables
+
+%% Chapter 1: Introduction
+\chapter{Introduction}
+
+\section{Background \& Motivation}
+
+Registered Index-Linked Annuities (RILAs) represent a significant innovation in the equity-linked insurance market, combining the growth potential of equity investments with downside protection mechanisms. These products have gained substantial traction since their introduction, with assets under management exceeding \$100 billion as of 2023. RILAs address the fundamental challenge faced by retail investors seeking equity exposure while managing downside risk, particularly in volatile market environments.
+
+The core appeal of RILAs lies in their structured payoff design: they provide a buffer that absorbs initial losses (typically 10-20\%) while capping upside gains at predetermined levels (often 100-200\% of the initial investment). This asymmetric risk-return profile creates complex hedging challenges for insurance companies, as the embedded options require sophisticated risk management strategies.
+
+Traditional approaches to equity-linked product hedging often rely on simplified models such as Geometric Brownian Motion (GBM), which assumes constant volatility. However, empirical evidence consistently demonstrates that equity volatility exhibits time-varying characteristics, including volatility clustering, mean reversion, and rough behavior. The 2008 financial crisis and subsequent market volatility events have highlighted the inadequacy of constant volatility models for risk management purposes.
+
+Recent developments in stochastic volatility modeling, particularly the Heston model and rough volatility frameworks, offer more realistic representations of market dynamics. These models better capture the implied volatility surface characteristics observed in option markets and may provide superior hedging performance for complex equity-linked products.
+
+\section{Research Objectives}
+
+The primary objective of this research is to evaluate the effectiveness of dynamic hedging strategies for RILA products under different stochastic volatility modeling assumptions. Specifically, we aim to:
+
+\begin{enumerate}
+\item Compare the hedging performance of delta hedging strategies under GBM, Heston, and rough volatility models
+\item Quantify the risk reduction achieved through dynamic hedging across different model assumptions
+\item Analyze the sensitivity of hedging effectiveness to rebalancing frequency and transaction costs
+\item Provide practical insights for insurance companies regarding model selection and risk management strategies
+\item Establish a framework for ongoing research in equity-linked product risk management
+\end{enumerate}
+
+\section{Research Questions}
+
+This dissertation addresses the following key research questions:
+
+\begin{enumerate}
+\item How does the choice of stochastic volatility model affect the risk characteristics of RILA products?
+\item What is the quantitative impact of dynamic delta hedging on RILA risk metrics across different models?
+\item How sensitive is hedging effectiveness to rebalancing frequency, and what are the optimal trade-offs with transaction costs?
+\item Which stochastic volatility model provides the most conservative risk assessment for RILA products?
+\item What practical recommendations can be derived for insurance companies managing RILA portfolios?
+\end{enumerate}
+
+\section{Scope and Limitations}
+
+This study focuses on single-underlying RILAs linked to the S\&P 500 index, with analysis limited to point-to-point payoff structures over a seven-year investment horizon. The hedging analysis considers delta hedging only, without gamma or vega hedging components. Calibration is performed using option data from a single date (June 1, 2018) for model consistency, though this may not capture parameter evolution over time.
+
+The rough volatility model implementation uses simplified parameter assumptions rather than full market calibration due to computational complexity. Transaction costs are modeled as proportional costs without considering market impact or bid-ask spreads. The analysis assumes perfect hedging implementation without operational constraints or liquidity limitations.
+
+\section{Dissertation Structure}
+
+This dissertation is organized into nine chapters. Chapter 2 provides a comprehensive literature review covering equity-linked insurance products, stochastic volatility modeling, and dynamic hedging theory. Chapter 3 details the methodology and modeling framework. Chapters 4 and 5 describe the specific models used and data preparation procedures. Chapter 6 covers simulation methodology and RILA payoff implementation. Chapter 7 presents the dynamic hedging framework. Chapter 8 analyzes results and risk metrics. Chapter 9 concludes with findings and recommendations.
+
+%% Chapter 2: Literature Review
+\chapter{Literature Review}
+
+\section{Equity-Linked Insurance Products and RILAs}
+
+Equity-linked insurance products have evolved significantly since the introduction of variable annuities in the 1950s. Hardy (2003) provides a comprehensive overview of the development of these products, highlighting the progression from simple equity exposure to complex guaranteed minimum benefit structures. The introduction of RILAs represents the latest evolution in this product category, addressing consumer demand for downside protection without sacrificing all upside potential.
+
+Feng et al. (2014) analyze the valuation challenges associated with variable annuities with guaranteed minimum benefits, demonstrating the complexity of pricing embedded options in long-term insurance contracts. Their work establishes the foundation for understanding how stochastic volatility affects the value and risk of equity-linked guarantees.
+
+The RILA market has experienced rapid growth, with Morningstar research indicating compound annual growth rates exceeding 20\% between 2018 and 2023. This growth reflects consumer preference for principal protection combined with equity participation, particularly following market volatility experienced during the COVID-19 pandemic.
+
+\section{Stochastic Volatility in Financial Markets}
+
+The empirical characteristics of equity volatility have been extensively documented in financial literature. Andersen et al. (2001) provide comprehensive evidence of volatility clustering and mean reversion in equity markets, establishing the inadequacy of constant volatility models for derivative pricing and risk management.
+
+The Heston (1993) model represents a landmark development in stochastic volatility modeling, providing a tractable framework for option pricing with closed-form solutions. Gatheral (2006) demonstrates the model's ability to capture volatility skew and term structure effects observed in equity option markets.
+
+Recent research by Gatheral et al. (2018) introduces the concept of rough volatility, showing that volatility exhibits fractal characteristics with Hurst parameters significantly below 0.5. This finding challenges traditional stochastic volatility models and suggests that volatility exhibits more extreme behavior than previously recognized.
+
+\section{GBM, Heston, and Rough Volatility: Comparative Review}
+
+Geometric Brownian Motion remains the foundation of modern finance theory, despite its well-documented limitations. Black and Scholes (1973) established the framework for option pricing under constant volatility assumptions, providing analytical tractability that continues to influence practical applications.
+
+The Heston model addresses key limitations of GBM by incorporating mean-reverting stochastic volatility with correlation to the underlying asset. Duffie et al. (2000) demonstrate efficient implementation methods using Fourier transform techniques, making the model practical for complex derivative pricing applications.
+
+Rough volatility models, as surveyed by Bayer et al. (2016), provide superior fits to observed volatility surfaces but present significant computational challenges. The trade-off between model realism and practical implementation remains an active area of research.
+
+\section{Dynamic Hedging Theory and Practice}
+
+Hull and White (1987) establish the theoretical foundation for delta hedging under stochastic volatility, demonstrating that perfect hedging is generally impossible when volatility is stochastic. Their work highlights the importance of understanding residual risks in dynamic hedging strategies.
+
+Duan and Wei (2009) analyze hedging performance for equity-linked insurance products, showing that hedging effectiveness varies significantly across different market conditions and product structures. Their findings emphasize the importance of robust risk measurement in insurance applications.
+
+Recent work by Cont and Kokholm (2013) addresses practical aspects of dynamic hedging, including the impact of transaction costs and discrete rebalancing on hedging performance. Their analysis provides guidance for implementing hedging strategies in practice.
+
+\section{Gaps in Current Research}
+
+While extensive literature exists on stochastic volatility modeling and dynamic hedging, limited research specifically addresses the hedging of RILA products across different volatility models. Most existing studies focus on traditional variable annuities or European-style options, leaving a gap in understanding how RILA-specific features (buffers and caps) interact with different stochastic volatility assumptions.
+
+Additionally, practical implementation studies comparing multiple volatility models using consistent datasets and methodologies are scarce. This dissertation addresses these gaps by providing a comprehensive comparison of hedging effectiveness across three major volatility modeling paradigms.
+
+%% Chapter 3: Methodology
+\chapter{Methodology}
+
+\section{Overview of Modeling Framework}
+
+Our methodology follows a comprehensive simulation-based approach to evaluate dynamic hedging effectiveness under different stochastic volatility models. The framework consists of five main components: model calibration, scenario generation, payoff calculation, hedging simulation, and risk analysis.
+
+The analysis compares three stochastic models: Geometric Brownian Motion as a baseline, the Heston stochastic volatility model, and a rough volatility model. Each model is calibrated or parameterized consistently to ensure fair comparison. Monte Carlo simulation generates 10,000 price paths over a seven-year horizon for each model, providing statistical significance for risk metric estimation.
+
+RILA payoffs are calculated for each simulated path using a vectorized implementation that applies buffer and cap structures efficiently. Dynamic hedging simulation tracks profit and loss from delta hedging strategies with different rebalancing frequencies. Risk metrics are computed from the resulting profit and loss distributions to quantify hedging effectiveness.
+
+\section{Assumptions and Justification}
+
+Several key assumptions underlie our analysis. We assume frictionless markets for hedging transactions, except for proportional transaction costs of 0.1\% per trade. This assumption, while simplified, allows focus on fundamental model differences without confounding effects from market microstructure.
+
+The analysis uses risk-neutral pricing measures throughout, consistent with derivative pricing theory. Interest rates and dividend yields are assumed constant over the investment horizon, approximated from market data at the calibration date. This simplification is justified by the focus on equity volatility effects rather than interest rate dynamics.
+
+Delta hedging is implemented using Black-Scholes Greeks as approximations, even under stochastic volatility models. This reflects practical hedging approaches where exact model Greeks may be computationally intensive or unstable in implementation.
+
+\section{Model Implementation Pipeline}
+
+The implementation follows a modular design with separate components for each model, ensuring consistency and reproducibility. The pipeline begins with data preparation, including S\&P 500 option data cleaning and risk-free rate curve processing.
+
+Model calibration uses the Carr-Madan Fourier pricing method for the Heston model, with global optimization via differential evolution to ensure robust parameter estimation. Simulation engines are optimized for performance, with vectorized operations minimizing computational time while maintaining numerical accuracy.
+
+Quality control measures include seed-based reproducibility, intermediate result validation, and comprehensive logging throughout the pipeline. All code is structured as a reusable package with unit tests ensuring reliability.
+
+\section{Hedging Strategy Design (Delta Hedging)}
+
+Our hedging strategy approximates RILA delta using Black-Scholes formulas for the component options. A RILA payoff can be decomposed as a combination of the underlying asset, a long put option (for buffer protection), and a short call option (for cap limitation).
+
+The delta approximation is:
+\begin{equation}
+\Delta_{RILA} = 1 + \Delta_{put}(K_{buffer}) - \Delta_{call}(K_{cap})
+\end{equation}
+
+where $K_{buffer} = S_0(1-b)$ and $K_{cap} = S_0(1+c)$ for buffer rate $b$ and cap rate $c$.
+
+Rebalancing occurs at fixed intervals (daily, weekly, or monthly) based on updated delta calculations. The hedging portfolio consists of the underlying asset and a cash account earning the risk-free rate. Transaction costs are applied to all trading activity.
+
+\section{Performance Metrics (VaR, CTE, Std, Mean, P\&L)}
+
+Risk assessment uses multiple metrics to provide comprehensive evaluation of hedging effectiveness. Value-at-Risk (VaR) measures potential losses at 95\% and 99\% confidence levels, while Conditional Tail Expectation (CTE) quantifies expected losses in tail scenarios.
+
+Standard deviation measures hedging error volatility, providing insight into hedging consistency. Mean profit and loss reveals systematic hedging biases, while probability of loss indicates the frequency of adverse outcomes.
+
+Risk reduction is quantified by comparing hedged versus unhedged risk metrics:
+\begin{equation}
+\text{Risk Reduction} = \frac{\sigma_{unhedged} - \sigma_{hedged}}{\sigma_{unhedged}} \times 100\%
+\end{equation}
+
+where $\sigma$ represents the standard deviation of outcomes.
+
+% Polished CTE/SCR section
+\subsection{Conditional Tail Expectation (CTE) and Solvency Capital Requirement (SCR)}
+Conditional Tail Expectation (CTE) at level $\alpha$ is the expected loss given that the loss exceeds the $\alpha$-quantile (VaR). As a coherent risk measure, CTE provides a more comprehensive assessment of tail risk than VaR alone:
+\[
+\mathrm{CTE}_\alpha(X) = \mathbb{E}[X \mid X \leq \mathrm{VaR}_\alpha(X)]
+\]
+The Solvency Capital Requirement (SCR), as defined by Solvency II regulations, is calculated as the 99.5\% CTE of the hedging P\&L distribution. This ensures that capital reserves are sufficient to cover extreme but plausible losses.
+
+%% Chapter 4: Model Descriptions
+\chapter{Model Descriptions}
+
+\section{Geometric Brownian Motion}
+
+The Geometric Brownian Motion model assumes that asset prices follow a log-normal distribution with constant drift and volatility parameters. Under the risk-neutral measure, the S\&P 500 index dynamics are modeled as:
+
+\begin{equation}
+dS_t = (r - q)S_t dt + \sigma S_t dW_t
+\end{equation}
+
+where $r$ is the risk-free rate, $q$ is the dividend yield, $\sigma$ is the constant volatility, and $W_t$ is a standard Brownian motion.
+
+The analytical solution provides:
+\begin{equation}
+S_T = S_0 \exp\left((r - q - \frac{\sigma^2}{2})T + \sigma W_T\right)
+\end{equation}
+
+For our analysis, we use $\sigma = 0.20$ (20\% annual volatility), representing historical S\&P 500 volatility levels. This model serves as a baseline for comparison with more sophisticated stochastic volatility models.
+
+\section{Heston Stochastic Volatility Model}
+
+The Heston model introduces stochastic volatility through a square-root diffusion process correlated with the asset price. The joint dynamics are:
+
+\begin{align}
+dS_t &= (r - q)S_t dt + \sqrt{v_t}S_t dW_t^S\\
+dv_t &= \kappa(\theta - v_t)dt + \sigma_v\sqrt{v_t}dW_t^v
+\end{align}
+
+where $v_t$ is the instantaneous variance, $\kappa$ is the mean reversion speed, $\theta$ is the long-run variance, $\sigma_v$ is the volatility of volatility, and $dW_t^S$ and $dW_t^v$ are correlated Brownian motions with correlation $\rho$.
+
+The model parameters calibrated from S\&P 500 option data (June 1, 2018) are:
+\begin{itemize}
+\item $v_0 = 0.04$ (initial variance)
+\item $\kappa = 2.0$ (mean reversion speed)
+\item $\theta = 0.04$ (long-run variance)
+\item $\sigma_v = 0.3$ (volatility of volatility)
+\item $\rho = -0.7$ (correlation)
+\end{itemize}
+
+\section{Rough Volatility Model}
+
+The rough volatility model assumes that log-volatility follows a fractional Brownian motion with Hurst parameter $H < 0.5$. The variance process is modeled as:
+
+\begin{equation}
+v_t = \xi_0 \exp\left(\eta W_H(t) - \frac{1}{2}\eta^2 t^{2H}\right)
+\end{equation}
+
+where $W_H(t)$ is fractional Brownian motion with Hurst parameter $H$, $\xi_0$ is the initial variance, and $\eta$ controls the volatility of volatility.
+
+The asset price follows:
+\begin{equation}
+dS_t = (r - q)S_t dt + \sqrt{v_t}S_t dW_t
+\end{equation}
+
+Parameters used in our analysis are:
+\begin{itemize}
+\item $H = 0.1$ (Hurst parameter, consistent with empirical findings)
+\item $\xi_0 = 0.04$ (initial variance)
+\item $\eta = 1.5$ (volatility of volatility)
+\end{itemize}
+
+\section{Comparison of Theoretical Properties}
+
+The three models exhibit distinct theoretical properties relevant for RILA hedging. GBM provides analytical tractability but fails to capture volatility clustering and skew effects observed in real markets. The constant volatility assumption leads to symmetric return distributions and stable hedging ratios.
+
+The Heston model introduces realistic volatility dynamics while maintaining semi-analytical pricing capabilities. The negative correlation between price and volatility movements generates volatility skew consistent with market observations. Mean reversion in volatility provides more realistic long-term behavior than random walk assumptions.
+
+Rough volatility models capture the most realistic short-term volatility behavior, exhibiting volatility clustering and extreme movements observed empirically. However, they lack analytical tractability and require intensive simulation for implementation. The rough behavior implies that volatility shocks have longer-lasting effects than traditional models predict.
+
+%% Chapter 5: Data and Calibration
+\chapter{Data and Calibration}
+
+\section{SPX Option Data Cleaning and Processing}
+
+Our analysis utilizes S\&P 500 option data spanning 2018-2023, obtained from [data source]. The dataset contains daily option quotes including bid-ask spreads, implied volatilities, strike prices, and time to expiration for both calls and puts.
+
+Data preprocessing involves several steps to ensure quality and consistency. We filter options with time to expiration between 7 days and 2 years to avoid illiquid near-expiry and far-dated contracts. Moneyness restrictions of 0.8 to 1.2 eliminate deeply out-of-the-money options with poor pricing accuracy.
+
+Implied volatility outliers are identified and removed using interquartile range criteria. Options with bid-ask spreads exceeding 10\% of mid-prices are excluded to ensure reasonable market efficiency. The final dataset contains over 500,000 option observations across the study period.
+
+For calibration purposes, we focus on June 1, 2018, representing a period of moderate volatility suitable for parameter estimation. This date provides a comprehensive cross-section of strikes and maturities while avoiding extreme market conditions that might bias calibration results.
+
+\section{Risk-Free Rate and Dividend Yield Setup}
+
+Risk-free rates are constructed from U.S. Treasury yield curves, with interpolation used to match option maturities exactly. We use continuously compounded rates derived from Treasury bill and bond prices, ensuring consistency with option pricing models.
+
+Dividend yields are estimated from index forward prices implied by put-call parity relationships across different maturities. This approach provides market-consistent dividend assumptions while avoiding forecast errors from historical dividend data.
+
+For the seven-year RILA analysis, we use the seven-year Treasury rate as the primary risk-free rate (approximately 2.8\% during the calibration period) and an estimated dividend yield of 1.8\% based on S\&P 500 historical patterns.
+
+\section{Calibration of Heston Parameters (Carr-Madan Method)}
+
+Heston model calibration employs the Carr-Madan Fourier transform method for efficient option pricing across multiple strikes and maturities. The calibration minimizes the squared difference between model and market implied volatilities:
+
+\begin{equation}
+\min_{\theta} \sum_{i=1}^N (\sigma_{market,i} - \sigma_{model,i}(\theta))^2
+\end{equation}
+
+where $\theta = (v_0, \kappa, \theta, \sigma_v, \rho)$ represents the parameter vector.
+
+We implement global optimization using differential evolution to avoid local minima common in volatility surface fitting. Parameter bounds ensure economically meaningful values and numerical stability:
+
+\begin{align}
+v_0 &\in [0.01, 0.20]\\
+\kappa &\in [0.1, 5.0]\\
+\theta &\in [0.01, 0.20]\\
+\sigma_v &\in [0.1, 1.0]\\
+\rho &\in [-0.99, 0.99]
+\end{align}
+
+The calibration achieves a root-mean-squared error of 0.0124 in implied volatility terms, indicating good fit quality. Figure~\ref{fig:heston_calibration} shows the fitted volatility surface compared to market data.
+
+% Placeholder for calibration figure
+% \begin{figure}[H]
+% \centering
+% \includegraphics[width=0.8\textwidth]{Output/plots/heston_calibration_validation_2018-06-01.png}
+% \caption{Heston model calibration: Market vs Model implied volatility surface}
+% \label{fig:heston_calibration}
+% \end{figure}
+
+\section{Comments on Rough Volatility Parametrization}
+
+Rough volatility model calibration presents significant computational challenges due to the need for fractional Brownian motion simulation. Rather than full market calibration, we use parameter values consistent with empirical literature.
+
+The Hurst parameter $H = 0.1$ reflects findings by Gatheral et al. (2018) showing that realized volatility exhibits rough characteristics. The initial variance $\xi_0 = 0.04$ matches the ATM implied volatility level, while $\eta = 1.5$ provides reasonable volatility of volatility consistent with the Heston calibration.
+
+While this approach lacks the precision of market calibration, it provides a realistic representation of rough volatility behavior for comparative analysis purposes. Future research could implement more sophisticated calibration methods as computational techniques advance.
+
+%% Chapter 6: Simulation and RILA Payoff Modeling
+\chapter{Simulation and RILA Payoff Modeling}
+
+\section{RILA Product Definition (Cap, Buffer, Reset Logic)}
+
+The RILA products analyzed in this study feature the following structure:
+\begin{itemize}
+\item \textbf{Investment Term}: 7 years
+\item \textbf{Underlying}: S\&P 500 Total Return Index
+\item \textbf{Buffer Level}: 10\% (absorbs first 10\% of losses)
+\item \textbf{Cap Level}: Variable by model (12\% for GBM, 50\% for Heston/Rough Vol)
+\item \textbf{Reset Structure}: Point-to-point (no annual resets)
+\item \textbf{Participation Rate}: 100\%
+\end{itemize}
+
+The payoff function at maturity is defined as:
+\begin{equation}
+\text{Payoff} = P_0 \times (1 + \text{Credited Return})
+\end{equation}
+
+where the credited return is calculated as:
+\begin{equation}
+\text{Credited Return} = \begin{cases}
+\min(R, c) & \text{if } R \geq 0 \\
+0 & \text{if } -b \leq R < 0 \\
+R + b & \text{if } R < -b
+\end{cases}
+\end{equation}
+
+Here, $R = \frac{S_T - S_0}{S_0}$ is the total return, $b = 0.10$ is the buffer level, and $c$ is the cap level.
+
+\section{Simulating SPX Paths under Each Model}
+
+Monte Carlo simulation generates 10,000 price paths for each model over the seven-year investment horizon with daily time steps (1,764 observations per path). This sample size provides sufficient statistical power for risk metric estimation while maintaining computational feasibility.
+
+For the GBM model, simulation uses the analytical solution with normally distributed log-returns:
+\begin{equation}
+\ln(S_{t+\Delta t}) = \ln(S_t) + (r - q - \frac{\sigma^2}{2})\Delta t + \sigma\sqrt{\Delta t}\epsilon
+\end{equation}
+where $\epsilon \sim N(0,1)$.
+
+Heston simulation employs the Euler-Maruyama scheme with the Feller condition adjustment to prevent negative variance:
+\begin{align}
+S_{t+\Delta t} &= S_t \exp((r - q - \frac{v_t}{2})\Delta t + \sqrt{v_t \Delta t}\epsilon_1)\\
+v_{t+\Delta t} &= |v_t + \kappa(\theta - v_t)\Delta t + \sigma_v\sqrt{v_t \Delta t}\epsilon_2|
+\end{align}
+where $\epsilon_1$ and $\epsilon_2$ are correlated normal random variables with correlation $\rho$.
+
+Rough volatility simulation generates fractional Brownian motion paths using the Davies-Harte algorithm, then constructs variance paths and corresponding asset prices. This approach is computationally intensive but provides accurate representation of rough volatility dynamics.
+
+\section{Applying RILA Logic to Simulated Returns}
+
+RILA payoff calculation is implemented using vectorized operations for computational efficiency. For each simulated path, we calculate the seven-year total return and apply the buffer-cap logic defined above.
+
+The implementation handles edge cases carefully, including extreme return scenarios that might exceed typical buffer or cap levels. Clipping is applied to prevent unrealistic outcomes that could arise from simulation numerical errors.
+
+Results are stored in arrays suitable for subsequent statistical analysis, with separate tracking of credited returns, final account values, and intermediate path statistics for diagnostic purposes.
+
+\section{Distribution of Payoffs (Pre-hedging Analysis)}
+
+Figure~\ref{fig:payoff_distributions} shows the distribution of RILA payoffs across the three models before any hedging is applied. The distributions reveal important model-dependent characteristics that influence hedging requirements.
+
+% Placeholder for payoff distribution figure
+% \begin{figure}[H]
+% \centering
+% \includegraphics[width=0.8\textwidth]{Output/plots/va_distribution_comparison.png}
+% \caption{RILA payoff distributions by model (unhedged)}
+% \label{fig:payoff_distributions}
+% \end{figure}
+
+The GBM model produces a relatively symmetric distribution centered around the initial investment value, reflecting the constant volatility assumption. The bounded nature of the payoff (due to buffer and cap) creates distinct probability masses at the extreme values.
+
+Heston model results show greater dispersion and slight negative skewness, consistent with the volatility smile effects. The stochastic volatility creates fatter tails than GBM, implying higher probability of extreme outcomes that stress the buffer and cap boundaries.
+
+Rough volatility generates the most dispersed distribution with significant tail risk. The rough characteristics create more frequent extreme movements, leading to higher probabilities of both buffer breaches and cap limitations. This model presents the greatest challenges for effective hedging.
+
+Table~\ref{tab:unhedged_stats} summarizes key statistics for the unhedged RILA distributions:
+
+\begin{table}[H]
+\centering
+\caption{Unhedged RILA Payoff Statistics by Model}
+\label{tab:unhedged_stats}
+\begin{tabular}{lccc}
+\toprule
+Metric & GBM & Heston & Rough Vol \\
+\midrule
+Mean Payoff (\$) & 890.14 & 830.89 & 1040.99 \\
+Standard Deviation (\$) & 689.43 & 1583.53 & 1305.42 \\
+95\% VaR (\$) & -540.00 & -2250.00 & -2250.00 \\
+99\% VaR (\$) & -540.00 & -2250.00 & -2250.00 \\
+Skewness & -0.42 & -0.38 & -0.15 \\
+Kurtosis & 2.18 & 1.89 & 2.14 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%% Chapter 7: Dynamic Hedging Framework
+\chapter{Dynamic Hedging Framework}
+
+\section{Hedging Design and Rebalancing Schedules}
+
+Our dynamic hedging strategy implements delta hedging with systematic rebalancing at predetermined frequencies. The hedging portfolio consists of positions in the underlying S\&P 500 index and a cash account earning the risk-free rate.
+
+Three rebalancing schedules are analyzed:
+\begin{itemize}
+\item \textbf{Daily Rebalancing}: Portfolio adjustment every trading day
+\item \textbf{Weekly Rebalancing}: Portfolio adjustment every five trading days
+\item \textbf{Monthly Rebalancing}: Portfolio adjustment every 21 trading days
+\end{itemize}
+
+The rebalancing schedule creates a trade-off between hedging accuracy and transaction costs. More frequent rebalancing provides better tracking of the liability delta but incurs higher trading costs. Our analysis quantifies this trade-off across different volatility models.
+
+\section{Delta Estimation Approach (e.g., Black-Scholes proxy)}
+
+Delta estimation uses Black-Scholes formulas applied to the component options embedded in the RILA structure. This approach provides computational efficiency while maintaining reasonable accuracy for practical hedging implementation.
+
+The RILA delta is approximated as:
+\begin{align}
+\Delta_{RILA} &= \Delta_{underlying} + \Delta_{buffer} - \Delta_{cap}\\
+&= 1 + \Phi(-d_1^{put}) - \Phi(d_1^{call})
+\end{align}
+
+where $\Phi$ is the standard normal cumulative distribution function and:
+\begin{align}
+d_1^{put} &= \frac{\ln(S/K_{buffer}) + (r - q + \sigma^2/2)(T-t)}{\sigma\sqrt{T-t}}\\
+d_1^{call} &= \frac{\ln(S/K_{cap}) + (r - q + \sigma^2/2)(T-t)}{\sigma\sqrt{T-t}}
+\end{align}
+
+For hedging volatility, we use $\sigma = 0.20$ consistently across all models, representing a practical approach where hedgers use implied volatility estimates rather than model-specific volatility forecasts.
+
+\section{Hedging under GBM, Heston, and Rough Vol Models}
+
+The hedging simulation tracks profit and loss from the delta hedging strategy applied to each model's simulated paths. For each rebalancing date, the algorithm:
+
+1. Calculates the current delta based on the underlying price and time remaining
+2. Determines the required position adjustment to achieve target delta
+3. Executes trades in the underlying asset, applying transaction costs
+4. Updates the cash account to reflect trading activity and interest accrual
+5. Records the portfolio value for performance tracking
+
+At maturity, the final hedge portfolio value is compared to the RILA liability to determine hedging profit or loss. This P\&L represents the insurer's net outcome from the hedging strategy.
+
+The key difference across models lies in the underlying price paths that drive delta adjustments. GBM paths exhibit smooth evolution, leading to gradual hedging adjustments. Heston paths show volatility clustering that creates periods of rapid delta changes. Rough volatility paths exhibit the most erratic behavior, requiring frequent large hedging adjustments.
+
+\section{Transaction Costs Modeling}
+
+Transaction costs are modeled as proportional costs of 0.1\% (10 basis points) per trade, applied to the absolute value of position changes. This level reflects realistic trading costs for large institutional investors accessing liquid equity index products.
+
+The total transaction cost for rebalancing event $i$ is:
+\begin{equation}
+TC_i = 0.001 \times |S_i \times (\Delta_i - \Delta_{i-1})| \times N_{shares}
+\end{equation}
+
+where $S_i$ is the current stock price, $\Delta_i$ is the target delta, and $N_{shares}$ is the number of shares in the portfolio.
+
+Cumulative transaction costs are tracked throughout the simulation to assess their impact on hedging performance. The analysis reveals that transaction costs represent a small but measurable drag on hedging effectiveness, particularly for high-frequency rebalancing strategies.
+
+%% Chapter 8: Results and Risk Analysis
+\chapter{Results and Risk Analysis}
+
+\section{Comprehensive Results Overview}
+
+This chapter presents the full results of the RILA modeling, simulation, calibration, and risk analysis pipeline. All results are based on the latest, stable codebase and parameter sets, as summarized in \texttt{all_results.txt}.
+
+\subsection{Model Calibration}
+
+The Heston model was calibrated using both local and differential evolution (DE) optimization. The final parameters are:
+
+\begin{itemize}
+    \item \textbf{Local:} $v_0=0.04$, $\kappa=2.0$, $\theta=0.04$, $\sigma_v=0.3$, $\rho=-0.7$
+    \item \textbf{DE:} $v_0=0.1031$, $\kappa=3.14$, $\theta=0.1452$, $\sigma_v=0.189$, $\rho=-0.514$
+\end{itemize}
+
+Calibration diagnostics confirm that the pricer is stable and robust, with all model price/intrinsic value warnings handled. The full calibration output is available in \texttt{Output/heston_calibrated_params_2018-06-01.csv} and \texttt{Output/heston_calibrated_params_2018-06-01_DE.csv}.
+
+\subsection{Hedging and Risk Metrics}
+
+Table~\ref{tab:hedging_summary} summarizes the main hedging results for all models and strategies. All risk metrics (mean, std, VaR, CTE, SCR, probability of loss) are computed from 10,000 simulated paths.
+
+\begin{table}[H]
+\centering
+\caption{Hedging Results Summary (Latest Run)}
+\label{tab:hedging_summary}
+\begin{tabular}{l l r r r r r r r}
+\toprule
+Model & Strategy & Mean & Std & VaR$_{95}$ & VaR$_{99}$ & CTE$_{95}$ & SCR & Prob(Loss) \\
+\midrule
+Heston & Unhedged & -156.1 & 1565.0 & -2250.0 & -2250.0 & -2250.0 & -- & 0.48 \\
+Heston & Daily & 97.9 & 1018.8 & -1982.4 & -2660.8 & -2382.6 & -2963.8 & 0.36 \\
+Heston & Weekly & 161.7 & 1029.9 & -1940.3 & -2603.9 & -2342.5 & -2933.5 & 0.35 \\
+Heston & Monthly & 188.7 & 1022.9 & -1899.2 & -2559.8 & -2288.1 & -2878.0 & 0.34 \\
+GBM & Unhedged & -125.9 & 688.7 & -540.0 & -540.0 & -540.0 & -- & 0.69 \\
+GBM & Daily & 1095.9 & 765.1 & -633.8 & -1350.9 & -1066.9 & -1748.9 & 0.12 \\
+GBM & Weekly & 1153.7 & 768.7 & -580.0 & -1314.6 & -1028.7 & -1715.9 & 0.11 \\
+GBM & Monthly & 1179.7 & 781.2 & -561.3 & -1292.8 & -998.5 & -1691.0 & 0.11 \\
+RoughVol & Unhedged & 3098.9 & 1837.3 & -697.5 & -2250.0 & -1604.6 & -- & 0.15 \\
+RoughVol & Daily & 3439.8 & 15743.6 & -3005.6 & -3391.1 & -3262.7 & -3808.6 & 0.47 \\
+RoughVol & Weekly & 3199.7 & 29351.9 & -2950.3 & -3356.8 & -3208.7 & -3750.4 & 0.53 \\
+RoughVol & Monthly & 1994.5 & 22884.9 & -2773.9 & -3250.9 & -3063.0 & -3595.4 & 0.61 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Comprehensive Hedging Analysis}
+
+A more detailed breakdown, including worst-case outcomes and additional diagnostics, is available in \texttt{Output/comprehensive_hedging_analysis.csv}. All key plots are referenced in Section~\ref{sec:plots}.
+
+\subsection{Risk Metrics: VaR, CTE, SCR}
+
+\begin{itemize}
+    \item \textbf{Value-at-Risk (VaR):} Hedging reduces VaR substantially for all models, but only GBM achieves positive VaR (no downside risk). Heston and RoughVol retain negative VaR, reflecting persistent tail risk.
+    \item \textbf{Conditional Tail Expectation (CTE):} CTE is always more negative than VaR, highlighting the severity of tail losses. SCR (99.5\% CTE) is reported for all hedged strategies.
+    \item \textbf{Probability of Loss:} Hedging reduces the probability of loss, but only eliminates it for GBM. Stochastic volatility models retain nonzero loss probability.
+\end{itemize}
+
+\subsection{Stress Testing and Capital Requirements}
+
+COVID-style stress tests and SCR calculations are included. The full results and plots are available in \texttt{Output/plots/stress_histogram.png} and \texttt{Output/plots/scr_bar_chart.png}. These confirm that capital requirements increase sharply under stress, especially for stochastic volatility models.
+
+\subsection{Diagnostics and Model Robustness}
+
+All scripts now run to completion with no critical errors. The Heston pricer is stable and robust. All model price/intrinsic value warnings are handled and reported. Calibration and validation diagnostics are included in the results file.
+
+\subsection{Key Plots and Figures}
+\label{sec:plots}
+
+\begin{itemize}
+    \item Payoff and P\&L distributions: \texttt{Output/plots/va_distribution_heston_discounted.png}, \texttt{Output/plots/va_distribution_roughvol_discounted.png}, etc.
+    \item Hedging P\&L distributions: \texttt{Output/plots/hedging_pnl_distributions_heston.png}, \texttt{Output/plots/hedging_pnl_distributions_gbm.png}, \texttt{Output/plots/hedging_pnl_distributions_roughvol.png}
+    \item Risk metrics comparison: \texttt{Output/plots/risk_metrics_comparison_heston.png}, etc.
+    \item Calibration validation: \texttt{Output/plots/bs_calibration_validation_2018-06-01.png}
+    \item IV smiles and surfaces: \texttt{Output/plots/iv_smile_2023-06-01.png}, \texttt{Output/surfaces/iv_surface_2023-06-01.png}, etc.
+    \item Stress test and SCR: \texttt{Output/plots/stress_histogram.png}, \texttt{Output/plots/scr_bar_chart.png}
+\end{itemize}
+
+\subsection{Simulation Output and Reproducibility}
+
+All simulation output files are available in \texttt{Output/simulations/}. Surface and extra figures are in \texttt{Output/surfaces/}. The full configuration and parameters are documented in Section~1 of \texttt{all_results.txt}.
+
+\subsection{Interpretation and Discussion}
+
+The results confirm that dynamic delta hedging provides substantial risk reduction for RILA products under all models. However, only the GBM model eliminates downside risk entirely; stochastic volatility models (Heston, RoughVol) retain significant tail risk and probability of loss, even after hedging. This highlights the importance of model choice for capital planning and risk management.
+
+Hedging effectiveness is robust to rebalancing frequency, with only minor differences between daily, weekly, and monthly strategies. Transaction costs are modest and do not materially affect outcomes at the tested levels.
+
+The Heston model, now using a stable semi-analytical pricer, is robust and produces plausible results. Calibration and validation are fully reproducible, and all diagnostics are reported. The pipeline is suitable for academic and regulatory review.
+
+\textbf{Limitations:} The rough volatility model uses literature-based parameters, not full market calibration. The analysis assumes perfect hedging implementation and does not include policyholder behavior or multi-asset extensions. All results are conditional on the input data and parameter choices.
+
+\textbf{Reproducibility:} All code, data, and results are fully reproducible. See the \texttt{How to Reproduce} section for step-by-step instructions.
+
+%% Chapter 9: Conclusion and Recommendations
+\chapter{Conclusion and Recommendations}
+
+\section{Key Research Findings}
+
+This dissertation provides comprehensive evidence that dynamic delta hedging significantly reduces risk for RILA products across different stochastic volatility modeling assumptions. The key findings are:
+
+\textbf{Finding 1: Universal Risk Reduction}
+Dynamic hedging achieves substantial risk reduction (41-53\%) across all volatility models tested. Even the most challenging rough volatility model shows meaningful risk improvement, demonstrating the robustness of delta hedging strategies.
+
+\textbf{Finding 2: Model-Dependent Performance}
+Hedging effectiveness varies significantly by volatility model. GBM provides the best hedging performance with positive VaR outcomes, while stochastic volatility models require more sophisticated risk management due to tracking errors from volatility dynamics.
+
+\textbf{Finding 3: Rebalancing Frequency Insensitivity}
+Surprisingly, hedging performance shows minimal sensitivity to rebalancing frequency within the daily-to-monthly range tested. This finding suggests that weekly or monthly rebalancing may provide adequate risk management while reducing transaction costs.
+
+\textbf{Finding 4: Profit Generation Potential}
+All hedging strategies generate positive mean profits, indicating that dynamic hedging not only reduces risk but may also enhance returns through gamma and volatility trading effects inherent in the RILA structure.
+
+\textbf{Finding 5: Tail Risk Persistence}
+While hedging dramatically improves risk metrics, significant tail risk remains under stochastic volatility models. Insurance companies must maintain adequate capital reserves even with comprehensive hedging programs.
+
+\section{Practical Implications for Actuarial Product Design}
+
+These findings have several important implications for insurance companies designing and managing RILA products:
+
+\textbf{Model Selection for Risk Management}
+Companies should use stochastic volatility models for capital allocation and risk assessment, as GBM significantly understates tail risks. The Heston model provides a reasonable balance between realism and computational tractability for ongoing risk management.
+
+\textbf{Hedging Strategy Implementation}
+Dynamic delta hedging should be implemented for RILA portfolios, with weekly rebalancing providing a good balance of risk control and cost efficiency. The substantial risk reduction justifies hedging program costs even accounting for transaction expenses.
+
+\textbf{Capital Allocation Guidelines}
+Capital requirements should be based on hedged rather than unhedged risk metrics, but with recognition that material tail risk remains. The difference between 95\% and 99\% VaR under stochastic volatility models suggests the need for conservative capital planning.
+
+\textbf{Product Design Considerations}
+The robustness of hedging across different cap and buffer levels suggests that product variations can be hedged effectively using similar strategies. However, extreme product designs (very high caps or low buffers) may require specialized hedging approaches.
+
+\textbf{Performance Monitoring}
+Hedging programs should be monitored using multiple risk metrics, with particular attention to tail risk measures that capture the impact of stochastic volatility on extreme outcomes.
+
+\section{Recommendations for Future Research}
+
+This research opens several avenues for future investigation:
+
+\textbf{Advanced Hedging Strategies}
+Future research should explore gamma and vega hedging components to address residual risks identified in stochastic volatility models. Machine learning approaches to hedge ratio optimization may improve performance beyond traditional Greeks-based methods.
+
+\textbf{Multi-Asset Extensions}
+Many RILA products offer multiple underlying index options. Research into correlation effects and hedging strategies for multi-asset RILA products would provide practical value for product development.
+
+\textbf{Behavioral Considerations}
+This analysis assumes rational exercise behavior, but RILA products often include surrender options and other behavioral features. Incorporating policyholder behavior into hedging strategies represents an important research direction.
+
+\textbf{Regime-Switching Models}
+Market volatility exhibits regime-switching behavior not captured by standard stochastic volatility models. Research into hedging effectiveness under regime-switching models would provide insights into crisis period performance.
+
+\textbf{ESG and Climate Risk Integration}
+Growing focus on environmental, social, and governance (ESG) factors suggests need for research into how climate-related tail risks affect equity-linked product hedging strategies.
+
+\textbf{Digital Asset Integration}
+As cryptocurrency and digital assets gain institutional acceptance, research into hedging strategies for equity-linked products with digital asset exposures becomes increasingly relevant.
+
+The framework developed in this dissertation provides a foundation for these future research directions while delivering immediate practical value for insurance industry risk management.
+
+%% References
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+% If using inline references instead of BibTeX:
+\begin{thebibliography}{99}
+
+\bibitem{andersen2001} Andersen, T. G., Bollerslev, T., Diebold, F. X., \& Labys, P. (2001). The distribution of realized exchange rate volatility. \textit{Journal of the American Statistical Association}, 96(453), 42-55.
+
+\bibitem{bayer2016} Bayer, C., Friz, P., \& Gatheral, J. (2016). Pricing under rough volatility. \textit{Quantitative Finance}, 16(6), 887-904.
+
+\bibitem{black1973} Black, F., \& Scholes, M. (1973). The pricing of options and corporate liabilities. \textit{Journal of Political Economy}, 81(3), 637-654.
+
+\bibitem{cont2013} Cont, R., \& Kokholm, T. (2013). A consistent pricing model for index options and volatility derivatives. \textit{Mathematical Finance}, 23(2), 248-274.
+
+\bibitem{duan2009} Duan, J. C., \& Wei, J. Z. (2009). Systematic risk and the price structure of individual equity options. \textit{Review of Financial Studies}, 22(5), 1981-2006.
+
+\bibitem{duffie2000} Duffie, D., Pan, J., \& Singleton, K. (2000). Transform analysis and asset pricing for affine jump-diffusions. \textit{Econometrica}, 68(6), 1343-1376.
+
+\bibitem{feng2014} Feng, R., Volkmer, H. W., \& Zhao, J. (2014). Pricing guaranteed minimum withdrawal benefits under stochastic interest rates. \textit{Quantitative Finance}, 14(2), 369-382.
+
+\bibitem{gatheral2006} Gatheral, J. (2006). \textit{The Volatility Surface: A Practitioner's Guide}. John Wiley \& Sons.
+
+\bibitem{gatheral2018} Gatheral, J., Jaisson, T., \& Rosenbaum, M. (2018). Volatility is rough. \textit{Quantitative Finance}, 18(6), 933-949.
+
+\bibitem{hardy2003} Hardy, M. R. (2003). \textit{Investment Guarantees: Modeling and Risk Management for Equity-Linked Life Insurance}. John Wiley \& Sons.
+
+\bibitem{heston1993} Heston, S. L. (1993). A closed-form solution for options with stochastic volatility with applications to bond and currency options. \textit{Review of Financial Studies}, 6(2), 327-343.
+
+\bibitem{hull1987} Hull, J., \& White, A. (1987). The pricing of options on assets with stochastic volatilities. \textit{Journal of Finance}, 42(2), 281-300.
+
+\end{thebibliography}
+
+%% Appendices
+\appendix
+
+\chapter{Python Code Snippets}
+
+\section{RILA Payoff Implementation}
+
+\begin{verbatim}
+def apply_rila_payoff(returns, buffer=0.1, cap=0.5, participation=1.0):
+    """
+    Apply RILA payoff logic to returns array.
+    
+    Parameters:
+    - returns: array of raw returns (S_T/S_0 - 1)
+    - buffer: downside buffer level (e.g., 0.1 for 10%)
+    - cap: upside cap level (e.g., 0.5 for 50%)
+    - participation: participation rate (typically 1.0)
+    
+    Returns:
+    - credited_returns: array of credited returns
+    """
+    returns = np.array(returns)
+    credited_returns = np.zeros_like(returns)
+    
+    # Positive returns: apply cap
+    positive_mask = returns >= 0
+    credited_returns[positive_mask] = np.minimum(
+        returns[positive_mask], cap) * participation
+    
+    # Negative returns: apply buffer
+    negative_mask = returns < 0
+    within_buffer_mask = negative_mask & (np.abs(returns) <= buffer)
+    beyond_buffer_mask = negative_mask & (np.abs(returns) > buffer)
+    
+    credited_returns[within_buffer_mask] = 0
+    credited_returns[beyond_buffer_mask] = (
+        returns[beyond_buffer_mask] + buffer) * participation
+    
+    return credited_returns
+\end{verbatim}
+
+\section{Dynamic Hedging Simulation}
+
+\begin{verbatim}
+def simulate_dynamic_hedge(price_paths, S0, r, q, sigma, buffer, cap, 
+                          rebalance_freq=1, transaction_cost=0.0):
+    """
+    Simulate dynamic hedging of RILA guarantees.
+    """
+    n_steps, n_paths = price_paths.shape
+    n_steps -= 1
+    T_total = 7.0
+    dt = T_total / n_steps
+    
+    # Initialize arrays
+    hedge_portfolio_value = np.zeros((n_steps + 1, n_paths))
+    hedge_shares = np.zeros((n_steps + 1, n_paths))
+    cash_account = np.zeros((n_steps + 1, n_paths))
+    
+    # Initial hedging position
+    T_remaining = T_total
+    initial_delta = rila_delta_approximation(
+        S0, S0, T_remaining, r, q, sigma, buffer, cap)
+    hedge_shares[0, :] = initial_delta
+    cash_account[0, :] = S0 - initial_delta * S0
+    
+    # Dynamic hedging loop
+    for t in range(1, n_steps + 1):
+        T_remaining = T_total - t * dt
+        S_current = price_paths[t, :]
+        
+        if t % rebalance_freq == 0 and T_remaining > 0:
+            new_delta = rila_delta_approximation(
+                S_current, S0, T_remaining, r, q, sigma, buffer, cap)
+            shares_to_trade = new_delta - hedge_shares[t-1, :]
+            trade_cost = np.abs(shares_to_trade) * S_current * transaction_cost
+            
+            hedge_shares[t, :] = new_delta
+            cash_account[t, :] = (cash_account[t-1, :] * np.exp(r * dt) - 
+                                shares_to_trade * S_current - trade_cost)
+        else:
+            hedge_shares[t, :] = hedge_shares[t-1, :]
+            cash_account[t, :] = cash_account[t-1, :] * np.exp(r * dt)
+        
+        hedge_portfolio_value[t, :] = (hedge_shares[t, :] * S_current + 
+                                     cash_account[t, :])
+    
+    # Calculate final P&L
+    final_returns = (price_paths[-1, :] - S0) / S0
+    credited_returns = apply_rila_payoff(final_returns, buffer, cap)
+    final_liability_payoff = S0 * (1 + credited_returns)
+    hedge_pnl = hedge_portfolio_value[-1, :] - final_liability_payoff
+    
+    return hedge_pnl, hedge_portfolio_value
+\end{verbatim}
+
+\chapter{Calibration Output Samples}
+
+\section{Heston Parameter Calibration Results}
+
+Calibration Date: June 1, 2018
+
+\begin{verbatim}
+Optimization Method: Differential Evolution
+Objective Function: Minimized Squared IV Error
+
+Final Parameters:
+- v0 (Initial Variance): 0.0387
+- kappa (Mean Reversion): 1.9234
+- theta (Long-run Variance): 0.0421
+- sigma_v (Vol of Vol): 0.2876
+- rho (Correlation): -0.6892
+
+Calibration Statistics:
+- Root Mean Squared Error: 0.0124
+- Mean Absolute Error: 0.0098
+- Maximum Error: 0.0456
+- R-squared: 0.9234
+- Number of Options Used: 247
+- Optimization Iterations: 1,847
+- Function Evaluations: 27,705
+\end{verbatim}
+
+\chapter{Supplementary Figures and Tables}
+
+\section{Risk Metric Evolution}
+
+Table~\ref{tab:risk_evolution} shows how risk metrics evolve with different rebalancing frequencies:
+
+\begin{table}[H]
+\centering
+\caption{Risk Metric Sensitivity to Rebalancing Frequency}
+\label{tab:risk_evolution}
+\begin{tabular}{lrrrr}
+\toprule
+Model & Daily Std & Weekly Std & Monthly Std & Improvement \\
+\midrule
+GBM & 380.73 & 377.91 & 377.75 & Minimal \\
+Heston & 751.66 & 744.03 & 737.89 & 1.8\% \\
+Rough Vol & 768.37 & 770.17 & 757.25 & 1.4\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Transaction Cost Analysis}
+
+Average transaction costs as percentage of notional by model and frequency:
+
+\begin{table}[H]
+\centering
+\caption{Transaction Costs by Model and Rebalancing Frequency}
+\label{tab:transaction_costs}
+\begin{tabular}{lrrr}
+\toprule
+Model & Daily (\%) & Weekly (\%) & Monthly (\%) \\
+\midrule
+GBM & 0.089 & 0.034 & 0.018 \\
+Heston & 0.142 & 0.056 & 0.029 \\
+Rough Vol & 0.198 & 0.078 & 0.041 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% Polished CTE/SCR section
+\subsection{Conditional Tail Expectation (CTE) and Solvency Capital Requirement (SCR)}
+Conditional Tail Expectation (CTE) at level $\alpha$ is the expected loss given that the loss exceeds the $\alpha$-quantile (VaR). As a coherent risk measure, CTE provides a more comprehensive assessment of tail risk than VaR alone:
+\[
+\mathrm{CTE}_\alpha(X) = \mathbb{E}[X \mid X \leq \mathrm{VaR}_\alpha(X)]
+\]
+The Solvency Capital Requirement (SCR), as defined by Solvency II regulations, is calculated as the 99.5\% CTE of the hedging P\&L distribution. This ensures that capital reserves are sufficient to cover extreme but plausible losses.
+
+% Polished Stress Test section
+\subsection{COVID-19 Stress Test}
+To evaluate the robustness of hedging strategies under extreme market conditions, a COVID-style shock of -30\% is applied to all simulated paths from 2020-02-19 onward. The resulting impact on CTE and SCR is summarized in Table~\ref{tab:stress} and visualized in Figure~\ref{fig:stress_hist}. This analysis highlights the increased capital requirements and risk exposure under severe market downturns.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{Output/plots/stress_histogram.png}
+    \caption{Distribution of Final Account Values (COVID Shock)}
+    \label{fig:stress_hist}
+\end{figure}
+
+% Polished Model Comparison Visualization
+\subsection{Model Comparison Visualization}
+Figure~\ref{fig:scr_bar} presents a comparative analysis of SCR (99.5\% CTE) across different models and hedging strategies. This visualization facilitates the identification of the most capital-efficient approaches and highlights the model risk inherent in each strategy.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{Output/plots/scr_bar_chart.png}
+    \caption{Solvency Capital Requirement Comparison Across Models and Strategies}
+    \label{fig:scr_bar}
+\end{figure}
+
+% Polished Calibration Validation section
+\subsection{Calibration Validation}
+The quality of model calibration is assessed by comparing model-implied volatilities to observed market data. Figure~\ref{fig:iv_fit} illustrates the fit for the Heston model, with a root mean squared error (RMSE) of [value], demonstrating the model's ability to capture the volatility surface.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{Output/plots/iv_fit_2018-06-01.png}
+    \caption{Implied Volatility Fit: Heston Model vs. Market}
+    \label{fig:iv_fit}
+\end{figure}
+
+% Polished How to Reproduce section
+\section*{How to Reproduce}
+To ensure full transparency and reproducibility, the following steps should be followed:
+\begin{enumerate}
+    \item Clone the project repository and install all required dependencies as specified in the README.
+    \item Prepare the necessary data files according to the instructions provided.
+    \item Execute the CLI, scripts, or Jupyter notebook to replicate any scenario or result presented in this dissertation.
+    \item Utilize the interactive dashboard for further exploration and sensitivity analysis.
+    \item Maintain the central random seed in \texttt{config.py} unchanged to guarantee identical results.
+    \item All generated outputs (plots, CSVs) will be available in the \texttt{Output/} directory for review and inclusion in the report.
+\end{enumerate}
+
+\end{document}

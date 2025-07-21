@@ -6,31 +6,21 @@ from utils import get_r_for_discounting
 from rila.config import initial_account, buffer_level, cap_level, T, riskfree_file
 from rila.payoff import apply_rila_payoff
 
-"""
-RILA payoff analysis for Rough Vol-simulated SPX paths using rila package modules.
-Loads simulated paths, applies RILA logic, discounts to present value, and plots results.
-"""
-# Load simulated SPX paths from Rough Vol model
 paths = pd.read_csv('Output/simulations/SPX_RoughVol_paths.csv', index_col=0)
 
-# Extract start and end values
 start_values = paths.iloc[0].values
 end_values = paths.iloc[-1].values
 
-# Calculate returns
 returns = (end_values - start_values) / start_values
 returns = np.clip(returns, -0.9, 1.5)
 
-# Apply RILA payoff logic (vectorized)
 credited = apply_rila_payoff(returns, buffer_level, cap_level)
 final_accounts = initial_account * (1 + credited)
 
-# Discount to present value
 r_discount = get_r_for_discounting('2018-01-03', riskfree_file)
 discount_factor = np.exp(-r_discount * T)
 discounted_accounts = final_accounts * discount_factor
 
-# Plot distributions
 plt.figure(figsize=(10, 6))
 plt.hist(final_accounts, bins=100, alpha=0.5, label='Undiscounted', edgecolor='black')
 plt.hist(discounted_accounts, bins=100, alpha=0.7, label='Discounted', edgecolor='red')

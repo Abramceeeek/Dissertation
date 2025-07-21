@@ -1,23 +1,39 @@
-# Central configuration for RILA project
+class Config:
+    def __init__(self):
+        self.SEED = 42
+        self.S0 = 4500
+        self.n_paths = 10000
+        self.T = 7 
+        self.N = 252 * self.T  
+        self.initial_account = 1000
+        self.buffer_level = 0.1  
+        self.cap_level = 0.5   
+        self.fee_rate = 0.01   
+        self.participation_rate = 1.0 
+        self.annual_reset = False 
+        self.heston_params = {
+            'v0': 0.0387,
+            'kappa': 1.9234,
+            'theta': 0.0421,
+            'sigma_v': 0.292,
+            'rho': -0.7
+        }
+        self.riskfree_file = 'Data/Risk-Free Yield Curve/Interest_Rate_Curves_2018_2023_CLEANED.csv'
+        self.dividend_file = 'Data/Dividend Yield Data/SPX_Implied_Yield_Rates_2018_2023.csv'
 
-S0 = 4500
-n_paths = 10000
-T = 7  # years
-N = 252 * T  # time steps
-initial_account = 1000
-buffer_level = 0.1  # 10% downside buffer
-cap_level = 0.5    # 50% upside cap
-fee_rate = 0.01    # 1% annual fee (if used)
-participation_rate = 1.0  # 100% participation
-annual_reset = False  # Toggle for annual reset RILA logic
-# Heston parameters (example: update as needed)
-heston_params = {
-    'v0': 0.04,
-    'kappa': 2.0,
-    'theta': 0.04,
-    'sigma_v': 0.3,
-    'rho': -0.7
-}
-# File paths
-riskfree_file = 'Data/Risk-Free Yield Curve/Interest_Rate_Curves_2018_2023_CLEANED.csv'
-dividend_file = 'Data/Dividend Yield Data/SPX_Implied_Yield_Rates_2018_2023.csv' 
+config = Config()
+
+SEED = config.SEED
+S0 = config.S0
+n_paths = config.n_paths
+T = config.T
+N = config.N
+initial_account = config.initial_account
+buffer_level = config.buffer_level
+cap_level = config.cap_level
+fee_rate = config.fee_rate
+participation_rate = config.participation_rate
+annual_reset = config.annual_reset
+heston_params = config.heston_params
+riskfree_file = config.riskfree_file
+dividend_file = config.dividend_file 

@@ -1,24 +1,9 @@
-"""
-Dynamic hedging logic for RILA products, including delta approximation and risk analysis.
-"""
 import numpy as np
 from scipy.stats import norm
 from rila.payoff import apply_rila_payoff
+from typing import Any, Dict
 
-def black_scholes_delta(S, K, T, r, q, sigma, option_type='call'):
-    """
-    Calculate Black-Scholes delta for vanilla options.
-    Args:
-        S: current stock price
-        K: strike price
-        T: time to maturity
-        r: risk-free rate
-        q: dividend yield
-        sigma: volatility
-        option_type: 'call' or 'put'
-    Returns:
-        delta: option delta
-    """
+def black_scholes_delta(S: float, K: float, T: float, r: float, q: float, sigma: float, option_type: str = 'call') -> float:
     if T <= 0:
         if option_type == 'call':
             return 1.0 if S > K else 0.0
@@ -30,48 +15,22 @@ def black_scholes_delta(S, K, T, r, q, sigma, option_type='call'):
     else:
         return np.exp(-q*T) * (norm.cdf(d1) - 1)
 
-def rila_delta_approximation(S, S0, T, r, q, sigma, buffer=0.1, cap=0.5):
-    """
-    Approximate the delta of a RILA payoff by decomposing it into vanilla options.
-    Args:
-        S: current stock price
-        S0: initial stock price
-        T: time to maturity
-        r: risk-free rate
-        q: dividend yield
-        sigma: volatility
-        buffer: downside buffer
-        cap: upside cap
-    Returns:
-        total_delta: combined delta of the RILA position
-    """
-    if T <= 0:
-        return 1.0
-    K_put = (1 - buffer) * S0
-    K_call = (1 + cap) * S0
-    delta_underlying = 1.0
-    delta_put = black_scholes_delta(S, K_put, T, r, q, sigma, 'put')
-    delta_call = black_scholes_delta(S, K_call, T, r, q, sigma, 'call')
-    total_delta = delta_underlying + delta_put - delta_call
-    return total_delta
+def rila_delta_approximation(S: float, S0: float, T: float, r: float, q: float, sigma: float, buffer: float, cap: float) -> float:
+    K_buffer = S0 * (1 - buffer)
+    K_cap = S0 * (1 + cap)
+    if T < 1/252:
+        # Support vectorized S
+        return np.where(np.asarray(S) > K_buffer, 1.0, 0.0)
+    d1_buffer = (np.log(np.asarray(S)/K_buffer) + (r - q + 0.5*sigma**2)*T) / (sigma*np.sqrt(T))
+    d1_cap = (np.log(np.asarray(S)/K_cap) + (r - q + 0.5*sigma**2)*T) / (sigma*np.sqrt(T))
+    return 1 + norm.cdf(-d1_buffer) - norm.cdf(d1_cap)
 
-def simulate_dynamic_hedge(price_paths, S0, r, q, sigma, buffer=0.1, cap=0.5, rebalance_freq=1, transaction_cost=0.0):
-    """
-    Simulate dynamic hedging of RILA guarantees.
-    Args:
-        price_paths: 2D array of shape (n_steps+1, n_paths) with stock price paths
-        S0: initial stock price
-        r: risk-free rate
-        q: dividend yield
-        sigma: volatility for hedging
-        buffer: RILA buffer level
-        cap: RILA cap level
-        rebalance_freq: rebalancing frequency (1=daily, 5=weekly, 21=monthly)
-        transaction_cost: proportional transaction cost
-    Returns:
-        hedge_pnl: final hedging P&L for each path
-        hedge_portfolio_value: hedge portfolio value over time
-    """
+def conditional_tail_expectation(values: np.ndarray, alpha: float) -> float:
+    var = np.percentile(values, 100*alpha)
+    tail = values[values <= var]
+    return np.mean(tail) if len(tail) > 0 else var
+
+def simulate_dynamic_hedge(price_paths: np.ndarray, S0: float, r: float, q: float, sigma: float, buffer: float = 0.1, cap: float = 0.5, rebalance_freq: int = 1, transaction_cost: float = 0.0) -> Any:
     n_steps, n_paths = price_paths.shape
     n_steps -= 1
     T_total = 7.0
@@ -105,23 +64,15 @@ def simulate_dynamic_hedge(price_paths, S0, r, q, sigma, buffer=0.1, cap=0.5, re
     hedge_pnl = final_hedge_value - final_liability_payoff
     return hedge_pnl, hedge_portfolio_value
 
-def analyze_hedging_performance(hedge_pnl, unhedged_pnl=None):
-    """
-    Analyze the performance of dynamic hedging strategy.
-    Args:
-        hedge_pnl: array of hedging P&L outcomes
-        unhedged_pnl: array of unhedged liability outcomes (optional)
-    Returns:
-        performance_stats: dictionary with key risk metrics
-    """
+def analyze_hedging_performance(hedge_pnl: np.ndarray, unhedged_pnl: np.ndarray = None) -> Dict[str, float]:
     hedge_pnl = np.array(hedge_pnl)
     stats = {
         'mean_pnl': np.mean(hedge_pnl),
         'std_pnl': np.std(hedge_pnl),
         'var_95': np.percentile(hedge_pnl, 5),
         'var_99': np.percentile(hedge_pnl, 1),
-        'cte_95': np.mean(hedge_pnl[hedge_pnl <= np.percentile(hedge_pnl, 5)]),
-        'cte_99': np.mean(hedge_pnl[hedge_pnl <= np.percentile(hedge_pnl, 1)]),
+        'cte_95': conditional_tail_expectation(hedge_pnl, 0.05),
+        'cte_99': conditional_tail_expectation(hedge_pnl, 0.01),
         'worst_case': np.min(hedge_pnl),
         'best_case': np.max(hedge_pnl),
         'prob_loss': np.mean(hedge_pnl < 0)

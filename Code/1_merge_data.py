@@ -9,4 +9,4 @@ dfs = [pd.read_csv(os.path.join(folder, f), low_memory=False) for f in files]
 options_df = pd.concat(dfs, ignore_index=True)
 options_df.to_csv(os.path.join(folder, 'SPX_Options_Data_2018_to_2023_MERGED.csv'), index=False)
 
-print("✅ Data merged successfully. Rows:", len(options_df))
+print("Data merged successfully. Rows:", len(options_df))

@@ -6,7 +6,6 @@ from matplotlib import cm
 from scipy.interpolate import griddata
 import os
 
-# Load cleaned option data
 df = pd.read_csv('Data/SPX Option Chain/SPX_Options_CLEANED.csv', low_memory=False)
 
 print("Unique dates in dataset:", df['date'].unique())
@@ -33,12 +32,12 @@ dates = [
 ]
 
 for snapshot_date in dates:
-    print(f"\n✅ Processing snapshot date: {snapshot_date}")
+    print(f"\nProcessing snapshot date: {snapshot_date}")
 
     subset_df = df[df['date'] == snapshot_date].copy()
 
     if subset_df.empty:
-        print(f"⚠️ No data for {snapshot_date}, skipping...")
+        print(f"No data for {snapshot_date}, skipping...")
         continue
 
     subset_df = subset_df[
@@ -50,10 +49,10 @@ for snapshot_date in dates:
     ]
 
     if subset_df.empty:
-        print(f"⚠️ No valid call options after filtering for {snapshot_date}, skipping...")
+        print(f"No valid call options after filtering for {snapshot_date}, skipping...")
         continue
 
-    print(f"✅ Filtered rows for {snapshot_date}: {len(subset_df)}")
+    print(f"Filtered rows for {snapshot_date}: {len(subset_df)}")
 
     # Create meshgrid
     strikes = np.linspace(subset_df['strike'].min(), subset_df['strike'].max(), 100)
@@ -69,7 +68,7 @@ for snapshot_date in dates:
 
     mask = ~np.isnan(Z)
     if not np.any(mask):
-        print(f"⚠️ Could not interpolate surface for {snapshot_date}, skipping...")
+        print(f"Could not interpolate surface for {snapshot_date}, skipping...")
         continue
 
     X_masked = X[mask]
@@ -91,9 +90,8 @@ for snapshot_date in dates:
     ax.set_ylabel('Maturity (days)')
     ax.set_zlabel('Implied Volatility')
 
-    # Ensure folder exists
     os.makedirs('Output/surfaces', exist_ok=True)
     plot_path = f'Output/surfaces/iv_surface_{snapshot_date}.png'
     plt.savefig(plot_path)
     plt.close()
-    print(f"✅ Vol surface saved to: {plot_path}")
+    print(f"Vol surface saved to: {plot_path}")

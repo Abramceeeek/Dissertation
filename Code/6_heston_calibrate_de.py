@@ -1,23 +1,19 @@
 import numpy as np
 import pandas as pd
 from scipy.optimize import differential_evolution
-from heston_pricing_carr_madan import carr_madan_call_price
+from heston_pricing_utils import heston_call_price
 from bs_utils import bs_implied_vol
 
-# ✅ Load market snapshot
 snapshot_date = '2018-06-01'
 market_data = pd.read_csv(f'Data/SPX_Snapshot_{snapshot_date}.csv')
 
-# ✅ Fixed global parameters
 S0 = 4500
 r = 0.02
 q = 0.01
 
-# ✅ Loss function
 def calibration_loss(params, data):
     v0, kappa, theta, sigma_v, rho = params
 
-    # Penalize unphysical parameter regions
     if (v0 < 0 or v0 > 2 or
         kappa <= 0 or kappa > 12 or
         theta < 0 or theta > 2 or
@@ -33,16 +29,10 @@ def calibration_loss(params, data):
         market_iv = row['impl_volatility']
 
         try:
-            # Model price with safer Carr-Madan settings
-            model_price = carr_madan_call_price(
-                S0, K, T, r, q,
-                v0, kappa, theta, sigma_v, rho,
-                alpha=2.5,
-                u_max=80,      # Tighter grid reduces blowups
-                N=800
+            model_price = heston_call_price(
+                S0, K, T, r, q, v0, kappa, theta, sigma_v, rho
             )
 
-            # Convert to implied vol
             model_iv = bs_implied_vol(model_price, S0, K, T, r, q)
 
             if np.isnan(model_iv) or model_iv < 0.0001 or model_iv > 5:
@@ -59,16 +49,14 @@ def calibration_loss(params, data):
     print(f"Loss: {mean_error:.6f} for params: {params}")
     return mean_error
 
-# ✅ Define bounds (wider for exploration)
 bounds = [
-    (0.01, 0.2),     # v0
-    (0.1, 5.0),      # kappa
-    (0.01, 0.2),     # theta
-    (0.01, 1.0),     # sigma_v
-    (-0.99, 0.0),    # rho — negative is realistic
+    (0.01, 0.2),    
+    (0.1, 5.0),     
+    (0.01, 0.2),    
+    (0.01, 1.0),     
+    (-0.99, 0.0),   
 ]
 
-# ✅ Run global optimizer
 result = differential_evolution(
     calibration_loss,
     bounds=bounds,
@@ -78,8 +66,7 @@ result = differential_evolution(
     polish=True
 )
 
-# ✅ Print final parameters
-print("\n✅ Calibration complete!")
+print("\nCalibration complete!")
 print("Calibrated parameters:")
 print(f"v0:      {result.x[0]:.4f}")
 print(f"kappa:   {result.x[1]:.4f}")
@@ -87,7 +74,6 @@ print(f"theta:   {result.x[2]:.4f}")
 print(f"sigma_v: {result.x[3]:.4f}")
 print(f"rho:     {result.x[4]:.4f}")
 
-# ✅ Save to CSV
 out_df = pd.DataFrame([{
     'v0': result.x[0],
     'kappa': result.x[1],
@@ -96,4 +82,4 @@ out_df = pd.DataFrame([{
     'rho': result.x[4]
 }])
 out_df.to_csv(f'Output/heston_calibrated_params_{snapshot_date}_DE.csv', index=False)
-print(f"✅ Saved to Output/heston_calibrated_params_{snapshot_date}_DE.csv")
+print(f"Saved to Output/heston_calibrated_params_{snapshot_date}_DE.csv")

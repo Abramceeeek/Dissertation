@@ -2,10 +2,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 
-# Load cleaned dataset
 df = pd.read_csv('Data/SPX Option Chain/SPX_Options_CLEANED.csv')
 
-# Dates to analyze (pick 5–10 representative ones)
 dates = [
     '2020-06-01',
     '2020-12-01',
@@ -16,7 +14,6 @@ dates = [
     '2023-06-01'
 ]
 
-# Ensure output folder exists
 os.makedirs('Output/plots', exist_ok=True)
 
 for date in dates:
@@ -27,7 +24,7 @@ for date in dates:
     ]
 
     if subset.empty:
-        print(f"⚠️ No data for {date}, skipping...")
+        print(f"No data for {date}, skipping...")
         continue
 
     plt.figure(figsize=(10, 5))
@@ -40,4 +37,4 @@ for date in dates:
     save_path = f'Output/plots/iv_smile_{date}.png'
     plt.savefig(save_path)
     plt.close()
-    print(f"✅ Saved: {save_path}")
+    print(f"Saved: {save_path}")

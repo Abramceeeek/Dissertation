@@ -5,31 +5,28 @@ from heston_pricing_utils import heston_characteristic_function
 def carr_madan_call_price(
     S0, K, T, r, q,
     v0, kappa, theta, sigma_v, rho,
-    alpha=2.0, N=2000, u_max=200
+    alpha=0.75, N=200, u_max=20
 ):
-    """
-    Computes European call price using Carr-Madan Fourier method.
-    """
-    # Log-strike
+    # Feller condition check
+    if 2 * kappa * theta <= sigma_v ** 2:
+        print(f"[CARR-MADAN WARNING] Feller condition violated: 2*kappa*theta={2*kappa*theta}, sigma_v^2={sigma_v**2}")
+        return 0.0
     k = np.log(K)
-
-    # Integration grid
     u = np.linspace(1e-5, u_max, N)
-
-    # Characteristic function
     phi = heston_characteristic_function(u - 1j * alpha, T, S0, r, q, v0, kappa, theta, sigma_v, rho)
-
-    # Integrand
     numerator = np.exp(-1j * u * k) * phi
     denominator = alpha**2 + alpha - u**2 + 1j * (2*alpha + 1)*u
     integrand = np.real(numerator / denominator)
-
-    # Integration using Simpson's rule
     integral = simpson(integrand, u)
-
-    # Price
     price = np.exp(-r*T) * integral / np.pi
-    return max(price, 0.0)
+    # Sanity checks
+    if not np.isfinite(price) or price < 0:
+        print(f"[CARR-MADAN WARNING] Unstable/negative price: {price}, S0={S0}, K={K}, T={T}, v0={v0}, kappa={kappa}, theta={theta}, sigma_v={sigma_v}, rho={rho}, alpha={alpha}, N={N}, u_max={u_max}")
+        return 0.0
+    if price > S0:
+        print(f"[CARR-MADAN WARNING] Price > S0: {price}, S0={S0}, K={K}, T={T}, v0={v0}, kappa={kappa}, theta={theta}, sigma_v={sigma_v}, rho={rho}, alpha={alpha}, N={N}, u_max={u_max}")
+        return S0
+    return price
 
 if __name__ == "__main__":
     price = carr_madan_call_price(
@@ -47,4 +44,4 @@ if __name__ == "__main__":
     N=2000,
     u_max=200
     )
-    print(f"✅ Test Heston price (Carr-Madan): {price:.2f}")
+    print(f"Test Heston price (Carr-Madan): {price:.2f}")

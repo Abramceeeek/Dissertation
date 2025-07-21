@@ -5,33 +5,26 @@ import os
 from rila.hedging import simulate_dynamic_hedge, analyze_hedging_performance
 from rila.payoff import apply_rila_payoff
 from rila.config import S0, buffer_level, cap_level, n_paths, T
+from rila.solvency_capital import calculate_scr
 
-"""
-Dynamic hedging simulation for RILA under different models using rila package modules.
-Loads simulated paths, runs dynamic hedging, analyzes and plots results.
-"""
-# Set seed for reproducibility
 np.random.seed(42)
 
 def run_hedging_simulation(model_name, paths_file, buffer=buffer_level, cap=cap_level):
     print(f"\nRunning dynamic hedging simulation for {model_name}...")
-    # Load simulated paths
     try:
         paths_df = pd.read_csv(paths_file, index_col=0)
-        price_paths = paths_df.values  # Shape: (n_steps+1, n_paths)
+        price_paths = paths_df.values  
     except FileNotFoundError:
         print(f"Could not find paths file: {paths_file}")
         return None
-    S0_local = price_paths[0, 0]  # Initial price from simulation
-    r = 0.02  # Risk-free rate (simplified)
-    q = 0.01  # Dividend yield (simplified)
-    sigma = 0.2  # Hedging volatility assumption
-    # Calculate unhedged liability distribution
+    S0_local = price_paths[0, 0]  
+    r = 0.02  
+    q = 0.01  
+    sigma = 0.2
     final_returns = (price_paths[-1, :] - S0_local) / S0_local
     credited_returns = apply_rila_payoff(final_returns, buffer, cap)
     unhedged_liability = S0_local * (1 + credited_returns)
-    unhedged_pnl = S0_local - unhedged_liability  # P&L from insurer perspective
-    # Run hedging simulations with different rebalancing frequencies
+    unhedged_pnl = S0_local - unhedged_liability
     rebalance_frequencies = {
         'Daily': 1,
         'Weekly': 5,
@@ -49,6 +42,8 @@ def run_hedging_simulation(model_name, paths_file, buffer=buffer_level, cap=cap_
             rebalance_freq=freq_value, transaction_cost=0.001
         )
         hedge_stats = analyze_hedging_performance(hedge_pnl, unhedged_pnl)
+        hedge_stats['scr'] = calculate_scr(hedge_pnl)
+        hedge_stats['cte_95'] = hedge_stats.get('cte_95', np.nan)
         results['hedged_results'][freq_name] = {
             'stats': hedge_stats,
             'pnl_distribution': hedge_pnl
@@ -56,6 +51,8 @@ def run_hedging_simulation(model_name, paths_file, buffer=buffer_level, cap=cap_
         print(f"    Mean P&L: ${hedge_stats['mean_pnl']:.2f}")
         print(f"    P&L Std: ${hedge_stats['std_pnl']:.2f}")
         print(f"    95% VaR: ${hedge_stats['var_95']:.2f}")
+        print(f"    95% CTE: ${hedge_stats['cte_95']:.2f}")
+        print(f"    SCR (99.5% CTE): ${hedge_stats['scr']:.2f}")
     return results
 
 def plot_hedging_results(results, save_dir='Output/plots'):
@@ -121,7 +118,8 @@ def create_summary_table(all_results):
             'Std P&L': unhedged['std_pnl'],
             '95% VaR': unhedged['var_95'],
             '99% VaR': unhedged['var_99'],
-            '95% CTE': unhedged['cte_95'],
+            '95% CTE': unhedged.get('cte_95', np.nan),
+            'SCR (99.5% CTE)': np.nan,
             'Prob(Loss)': unhedged['prob_loss']
         })
         for freq_name in ['Daily', 'Weekly', 'Monthly']:
@@ -133,19 +131,19 @@ def create_summary_table(all_results):
                 'Std P&L': hedged['std_pnl'],
                 '95% VaR': hedged['var_95'],
                 '99% VaR': hedged['var_99'],
-                '95% CTE': hedged['cte_95'],
+                '95% CTE': hedged.get('cte_95', np.nan),
+                'SCR (99.5% CTE)': hedged.get('scr', np.nan),
                 'Prob(Loss)': hedged['prob_loss']
             })
     summary_df = pd.DataFrame(summary_data)
     os.makedirs('Output', exist_ok=True)
     summary_df.to_csv('Output/hedging_summary_table.csv', index=False, float_format='%.4f')
+    return summary_df
 
-# Main execution
 if __name__ == "__main__":
     print("Starting Dynamic Hedging Analysis for RILA Products")
     print("="*60)
     
-    # Model configurations
     models = [
         {
             'name': 'Heston',
@@ -167,7 +165,6 @@ if __name__ == "__main__":
         }
     ]
     
-    # Run hedging simulations for all models
     all_results = []
     for model_config in models:
         results = run_hedging_simulation(
@@ -178,13 +175,11 @@ if __name__ == "__main__":
         )
         
         if results is not None:
-            # Plot results for this model
             plot_hedging_results(results)
             all_results.append(results)
         
         print(f"Completed {model_config['name']} analysis")
     
-    # Create comprehensive summary
     if all_results:
         summary_df = create_summary_table(all_results)
         print(f"\nAnalysis complete! Summary saved to Output/hedging_summary_table.csv")
