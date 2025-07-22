@@ -1,0 +1,67 @@
+\babel@toc {english}{}\relax 
+\contentsline {chapter}{\numberline {1}Introduction}{5}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Background \& Motivation}{5}{section.1.1}%
+\contentsline {section}{\numberline {1.2}Research Objectives}{5}{section.1.2}%
+\contentsline {section}{\numberline {1.3}Research Questions}{6}{section.1.3}%
+\contentsline {section}{\numberline {1.4}Scope and Limitations}{6}{section.1.4}%
+\contentsline {section}{\numberline {1.5}Dissertation Structure}{6}{section.1.5}%
+\contentsline {chapter}{\numberline {2}Literature Review}{8}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Equity-Linked Insurance Products and RILAs}{8}{section.2.1}%
+\contentsline {section}{\numberline {2.2}Stochastic Volatility in Financial Markets}{8}{section.2.2}%
+\contentsline {section}{\numberline {2.3}GBM, Heston, and Rough Volatility: Comparative Review}{9}{section.2.3}%
+\contentsline {section}{\numberline {2.4}Dynamic Hedging Theory and Practice}{9}{section.2.4}%
+\contentsline {section}{\numberline {2.5}Gaps in Current Research}{9}{section.2.5}%
+\contentsline {chapter}{\numberline {3}Methodology}{10}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Overview of Modeling Framework}{10}{section.3.1}%
+\contentsline {section}{\numberline {3.2}Assumptions and Justification}{10}{section.3.2}%
+\contentsline {section}{\numberline {3.3}Model Implementation Pipeline}{11}{section.3.3}%
+\contentsline {section}{\numberline {3.4}Hedging Strategy Design (Delta Hedging)}{11}{section.3.4}%
+\contentsline {section}{\numberline {3.5}Performance Metrics (VaR, CTE, Std, Mean, P\&L)}{11}{section.3.5}%
+\contentsline {subsection}{\numberline {3.5.1}Conditional Tail Expectation (CTE) and Solvency Capital Requirement (SCR)}{12}{subsection.3.5.1}%
+\contentsline {chapter}{\numberline {4}Model Descriptions}{13}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Geometric Brownian Motion}{13}{section.4.1}%
+\contentsline {section}{\numberline {4.2}Heston Stochastic Volatility Model}{13}{section.4.2}%
+\contentsline {section}{\numberline {4.3}Rough Volatility Model}{14}{section.4.3}%
+\contentsline {section}{\numberline {4.4}Comparison of Theoretical Properties}{14}{section.4.4}%
+\contentsline {chapter}{\numberline {5}Data and Calibration}{15}{chapter.5}%
+\contentsline {section}{\numberline {5.1}SPX Option Data Cleaning and Processing}{15}{section.5.1}%
+\contentsline {section}{\numberline {5.2}Risk-Free Rate and Dividend Yield Setup}{15}{section.5.2}%
+\contentsline {section}{\numberline {5.3}Calibration of Heston Parameters (Carr-Madan Method)}{16}{section.5.3}%
+\contentsline {section}{\numberline {5.4}Comments on Rough Volatility Parametrization}{16}{section.5.4}%
+\contentsline {chapter}{\numberline {6}Simulation and RILA Payoff Modeling}{17}{chapter.6}%
+\contentsline {section}{\numberline {6.1}RILA Product Definition (Cap, Buffer, Reset Logic)}{17}{section.6.1}%
+\contentsline {section}{\numberline {6.2}Simulating SPX Paths under Each Model}{17}{section.6.2}%
+\contentsline {section}{\numberline {6.3}Applying RILA Logic to Simulated Returns}{18}{section.6.3}%
+\contentsline {section}{\numberline {6.4}Distribution of Payoffs (Pre-hedging Analysis)}{18}{section.6.4}%
+\contentsline {chapter}{\numberline {7}Dynamic Hedging Framework}{20}{chapter.7}%
+\contentsline {section}{\numberline {7.1}Hedging Design and Rebalancing Schedules}{20}{section.7.1}%
+\contentsline {section}{\numberline {7.2}Delta Estimation Approach (e.g., Black-Scholes proxy)}{20}{section.7.2}%
+\contentsline {section}{\numberline {7.3}Hedging under GBM, Heston, and Rough Vol Models}{21}{section.7.3}%
+\contentsline {section}{\numberline {7.4}Transaction Costs Modeling}{21}{section.7.4}%
+\contentsline {chapter}{\numberline {8}Results and Risk Analysis}{22}{chapter.8}%
+\contentsline {section}{\numberline {8.1}Comprehensive Results Overview}{22}{section.8.1}%
+\contentsline {subsection}{\numberline {8.1.1}Model Calibration}{22}{subsection.8.1.1}%
+\contentsline {subsection}{\numberline {8.1.2}Hedging and Risk Metrics}{22}{subsection.8.1.2}%
+\contentsline {subsection}{\numberline {8.1.3}Comprehensive Hedging Analysis}{23}{subsection.8.1.3}%
+\contentsline {subsection}{\numberline {8.1.4}Risk Metrics: VaR, CTE, SCR}{23}{subsection.8.1.4}%
+\contentsline {subsection}{\numberline {8.1.5}Stress Testing and Capital Requirements}{23}{subsection.8.1.5}%
+\contentsline {subsection}{\numberline {8.1.6}Diagnostics and Model Robustness}{23}{subsection.8.1.6}%
+\contentsline {subsection}{\numberline {8.1.7}Key Plots and Figures}{24}{subsection.8.1.7}%
+\contentsline {subsection}{\numberline {8.1.8}Simulation Output and Reproducibility}{24}{subsection.8.1.8}%
+\contentsline {subsection}{\numberline {8.1.9}Interpretation and Discussion}{24}{subsection.8.1.9}%
+\contentsline {chapter}{\numberline {9}Conclusion and Recommendations}{25}{chapter.9}%
+\contentsline {section}{\numberline {9.1}Key Research Findings}{25}{section.9.1}%
+\contentsline {section}{\numberline {9.2}Practical Implications for Actuarial Product Design}{25}{section.9.2}%
+\contentsline {section}{\numberline {9.3}Recommendations for Future Research}{26}{section.9.3}%
+\contentsline {chapter}{\numberline {A}Python Code Snippets}{28}{appendix.A}%
+\contentsline {section}{\numberline {A.1}RILA Payoff Implementation}{28}{section.A.1}%
+\contentsline {section}{\numberline {A.2}Dynamic Hedging Simulation}{29}{section.A.2}%
+\contentsline {chapter}{\numberline {B}Calibration Output Samples}{31}{appendix.B}%
+\contentsline {section}{\numberline {B.1}Heston Parameter Calibration Results}{31}{section.B.1}%
+\contentsline {chapter}{\numberline {C}Supplementary Figures and Tables}{32}{appendix.C}%
+\contentsline {section}{\numberline {C.1}Risk Metric Evolution}{32}{section.C.1}%
+\contentsline {section}{\numberline {C.2}Transaction Cost Analysis}{32}{section.C.2}%
+\contentsline {subsection}{\numberline {C.2.1}Conditional Tail Expectation (CTE) and Solvency Capital Requirement (SCR)}{32}{subsection.C.2.1}%
+\contentsline {subsection}{\numberline {C.2.2}COVID-19 Stress Test}{33}{subsection.C.2.2}%
+\contentsline {subsection}{\numberline {C.2.3}Model Comparison Visualization}{33}{subsection.C.2.3}%
+\contentsline {subsection}{\numberline {C.2.4}Calibration Validation}{33}{subsection.C.2.4}%

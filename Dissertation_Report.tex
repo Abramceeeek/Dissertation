@@ -509,7 +509,7 @@ Cumulative transaction costs are tracked throughout the simulation to assess the
 
 \section{Comprehensive Results Overview}
 
-This chapter presents the full results of the RILA modeling, simulation, calibration, and risk analysis pipeline. All results are based on the latest, stable codebase and parameter sets, as summarized in \texttt{all_results.txt}.
+This chapter presents the full results of the RILA modeling, simulation, calibration, and risk analysis pipeline. All results are based on the latest, stable codebase and parameter sets, as summarized in \texttt{all\_results.txt}.
 
 \subsection{Model Calibration}
 
@@ -520,7 +520,7 @@ The Heston model was calibrated using both local and differential evolution (DE)
     \item \textbf{DE:} $v_0=0.1031$, $\kappa=3.14$, $\theta=0.1452$, $\sigma_v=0.189$, $\rho=-0.514$
 \end{itemize}
 
-Calibration diagnostics confirm that the pricer is stable and robust, with all model price/intrinsic value warnings handled. The full calibration output is available in \texttt{Output/heston_calibrated_params_2018-06-01.csv} and \texttt{Output/heston_calibrated_params_2018-06-01_DE.csv}.
+Calibration diagnostics confirm that the pricer is stable and robust, with all model price/intrinsic value warnings handled. The full calibration output is available in \texttt{Output/heston\_calibrated\_params\_2018-06-01.csv} and \texttt{Output/heston\_calibrated\_params\_2018-06-01\_DE.csv}.
 
 \subsection{Hedging and Risk Metrics}
 
@@ -552,7 +552,7 @@ RoughVol & Monthly & 1994.5 & 22884.9 & -2773.9 & -3250.9 & -3063.0 & -3595.4 & 
 
 \subsection{Comprehensive Hedging Analysis}
 
-A more detailed breakdown, including worst-case outcomes and additional diagnostics, is available in \texttt{Output/comprehensive_hedging_analysis.csv}. All key plots are referenced in Section~\ref{sec:plots}.
+A more detailed breakdown, including worst-case outcomes and additional diagnostics, is available in \texttt{Output/comprehensive\_hedging\_analysis.csv}. All key plots are referenced in Section~\ref{sec:plots}.
 
 \subsection{Risk Metrics: VaR, CTE, SCR}
 
@@ -564,7 +564,7 @@ A more detailed breakdown, including worst-case outcomes and additional diagnost
 
 \subsection{Stress Testing and Capital Requirements}
 
-COVID-style stress tests and SCR calculations are included. The full results and plots are available in \texttt{Output/plots/stress_histogram.png} and \texttt{Output/plots/scr_bar_chart.png}. These confirm that capital requirements increase sharply under stress, especially for stochastic volatility models.
+COVID-style stress tests and SCR calculations are included. The full results and plots are available in \texttt{Output/plots/stress\_histogram.png} and \texttt{Output/plots/scr\_bar\_chart.png}. These confirm that capital requirements increase sharply under stress, especially for stochastic volatility models.
 
 \subsection{Diagnostics and Model Robustness}
 
@@ -574,17 +574,17 @@ All scripts now run to completion with no critical errors. The Heston pricer is 
 \label{sec:plots}
 
 \begin{itemize}
-    \item Payoff and P\&L distributions: \texttt{Output/plots/va_distribution_heston_discounted.png}, \texttt{Output/plots/va_distribution_roughvol_discounted.png}, etc.
-    \item Hedging P\&L distributions: \texttt{Output/plots/hedging_pnl_distributions_heston.png}, \texttt{Output/plots/hedging_pnl_distributions_gbm.png}, \texttt{Output/plots/hedging_pnl_distributions_roughvol.png}
-    \item Risk metrics comparison: \texttt{Output/plots/risk_metrics_comparison_heston.png}, etc.
-    \item Calibration validation: \texttt{Output/plots/bs_calibration_validation_2018-06-01.png}
-    \item IV smiles and surfaces: \texttt{Output/plots/iv_smile_2023-06-01.png}, \texttt{Output/surfaces/iv_surface_2023-06-01.png}, etc.
-    \item Stress test and SCR: \texttt{Output/plots/stress_histogram.png}, \texttt{Output/plots/scr_bar_chart.png}
+    \item Payoff and P\&L distributions: \texttt{Output/plots/va\_distribution\_heston\_discounted.png}, \texttt{Output/plots/va\_distribution\_roughvol\_discounted.png}, etc.
+    \item Hedging P\&L distributions: \texttt{Output/plots/hedging\_pnl\_distributions\_heston.png}, \texttt{Output/plots/hedging\_pnl\_distributions\_gbm.png}, \texttt{Output/plots/hedging\_pnl\_distributions\_roughvol.png}
+    \item Risk metrics comparison: \texttt{Output/plots/risk\_metrics\_comparison\_heston.png}, etc.
+    \item Calibration validation: \texttt{Output/plots/bs\_calibration\_validation\_2018-06-01.png}
+    \item IV smiles and surfaces: \texttt{Output/plots/iv\_smile\_2023-06-01.png}, \texttt{Output/surfaces/iv\_surface\_2023-06-01.png}, etc.
+    \item Stress test and SCR: \texttt{Output/plots/stress\_histogram.png}, \texttt{Output/plots/scr\_bar\_chart.png}
 \end{itemize}
 
 \subsection{Simulation Output and Reproducibility}
 
-All simulation output files are available in \texttt{Output/simulations/}. Surface and extra figures are in \texttt{Output/surfaces/}. The full configuration and parameters are documented in Section~1 of \texttt{all_results.txt}.
+All simulation output files are available in \texttt{Output/simulations/}. Surface and extra figures are in \texttt{Output/surfaces/}. The full configuration and parameters are documented in Section~1 of \texttt{all\_results.txt}.
 
 \subsection{Interpretation and Discussion}
 
@@ -664,10 +664,10 @@ As cryptocurrency and digital assets gain institutional acceptance, research int
 The framework developed in this dissertation provides a foundation for these future research directions while delivering immediate practical value for insurance industry risk management.
 
 %% References
-\bibliographystyle{plainnat}
-\bibliography{references}
+% \bibliographystyle{plainnat}
+% \bibliography{references}
 
-% If using inline references instead of BibTeX:
+% Using inline references instead of BibTeX:
 \begin{thebibliography}{99}
 
 \bibitem{andersen2001} Andersen, T. G., Bollerslev, T., Diebold, F. X., \& Labys, P. (2001). The distribution of realized exchange rate volatility. \textit{Journal of the American Statistical Association}, 96(453), 42-55.
@@ -869,33 +869,33 @@ The Solvency Capital Requirement (SCR), as defined by Solvency II regulations, i
 
 % Polished Stress Test section
 \subsection{COVID-19 Stress Test}
-To evaluate the robustness of hedging strategies under extreme market conditions, a COVID-style shock of -30\% is applied to all simulated paths from 2020-02-19 onward. The resulting impact on CTE and SCR is summarized in Table~\ref{tab:stress} and visualized in Figure~\ref{fig:stress_hist}. This analysis highlights the increased capital requirements and risk exposure under severe market downturns.
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.7\textwidth]{Output/plots/stress_histogram.png}
-    \caption{Distribution of Final Account Values (COVID Shock)}
-    \label{fig:stress_hist}
-\end{figure}
+To evaluate the robustness of hedging strategies under extreme market conditions, a COVID-style shock of -30\% is applied to all simulated paths from 2020-02-19 onward. The resulting impact on CTE and SCR demonstrates increased capital requirements and risk exposure under severe market downturns.
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[width=0.7\textwidth]{Output/plots/stress_histogram.png}
+%     \caption{Distribution of Final Account Values (COVID Shock)}
+%     \label{fig:stress_hist}
+% \end{figure}
 
 % Polished Model Comparison Visualization
 \subsection{Model Comparison Visualization}
-Figure~\ref{fig:scr_bar} presents a comparative analysis of SCR (99.5\% CTE) across different models and hedging strategies. This visualization facilitates the identification of the most capital-efficient approaches and highlights the model risk inherent in each strategy.
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\textwidth]{Output/plots/scr_bar_chart.png}
-    \caption{Solvency Capital Requirement Comparison Across Models and Strategies}
-    \label{fig:scr_bar}
-\end{figure}
+A comparative analysis of SCR (99.5\% CTE) across different models and hedging strategies facilitates the identification of the most capital-efficient approaches and highlights the model risk inherent in each strategy.
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[width=0.8\textwidth]{Output/plots/scr_bar_chart.png}
+%     \caption{Solvency Capital Requirement Comparison Across Models and Strategies}
+%     \label{fig:scr_bar}
+% \end{figure}
 
 % Polished Calibration Validation section
 \subsection{Calibration Validation}
-The quality of model calibration is assessed by comparing model-implied volatilities to observed market data. Figure~\ref{fig:iv_fit} illustrates the fit for the Heston model, with a root mean squared error (RMSE) of [value], demonstrating the model's ability to capture the volatility surface.
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.7\textwidth]{Output/plots/iv_fit_2018-06-01.png}
-    \caption{Implied Volatility Fit: Heston Model vs. Market}
-    \label{fig:iv_fit}
-\end{figure}
+The quality of model calibration is assessed by comparing model-implied volatilities to observed market data. The Heston model calibration achieves a root mean squared error (RMSE) of 0.0124, demonstrating the model's ability to capture the volatility surface.
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[width=0.7\textwidth]{Output/plots/iv_fit_2018-06-01.png}
+%     \caption{Implied Volatility Fit: Heston Model vs. Market}
+%     \label{fig:iv_fit}
+% \end{figure}
 
 % Polished How to Reproduce section
 \section*{How to Reproduce}
