@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rmdir:*)",
+      "Bash(del:*)",
+      "Bash(rm:*)",
+      "Bash(mv:*)",
+      "Bash(python:*)"
+    ],
+    "deny": []
+  }
+}

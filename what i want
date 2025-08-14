@@ -1,0 +1,198 @@
+You are a senior quant developer helping finalize an MSc dissertation project.
+
+Dissertation Title (exact scope):
+The Effects of Stochastic Volatility Models and Dynamic Hedging Strategies on Capital Requirements for Equity-Linked Variable Annuities: An Enterprise Risk Management Approach
+
+Research Question:
+How do dynamic option hedging strategies and stochastic volatility models affect the regulatory capital charges for equity-linked variable annuity products under Solvency II?
+
+0) Scope Constraints (do not deviate)
+
+Models: Use stochastic volatility models only — Heston and Rough Volatility.
+
+Product: Study RILA (Registered Index-Linked Annuity) as the representative equity-linked variable annuity.
+
+Risk Metric: Compute Solvency II one-year SCR via 99.5% VaR and CTE 99.5% of Δ Own Funds.
+
+Horizon: Exactly 1 year for the SCR shock; re-value liability at t=1 (remaining maturity 
+𝑇
+−
+1
+T−1).
+
+Approach: Enterprise Risk Management framing — focus on Δ Own Funds = (Assets − BEL) change over one year, with and without dynamic hedging.
+
+Out of scope: No GBM baseline, no non-VA products, no multi-year capital metrics.
+
+1) Current Repository Context (read but keep scope)
+
+Existing files include (names may vary):
+
+Data & IV: 1_merge_data.py, 2_clean_and_prepare.py, 3_plot_iv_smile.py, 4_build_iv_surface.py, 5_plot_all_iv_surfaces.py, 2_plot_target_iv_surface.py
+
+Rates/dividends: riskfree_trim.py, riskfree_clean_prepare.py
+
+Pricing & calibration: heston_pricing_carr_madan.py, heston_pricing_utils.py, 6_heston_calibrate.py, 6_heston_calibrate_de.py
+
+Simulations: 8_simulate_spx_heston.py, 10_simulate_spx_roughvol.py
+
+Product sims: 9_rila_heston.py, 11_rila_under_roughvol.py
+
+These already calibrate Heston, simulate Heston/RoughVol, and price a RILA payoff. What’s missing: dynamic hedging, one-year ΔOF SCR, rebalance-frequency experiments, and consistent snapshot inputs.
+
+2) Tasks (required)
+A) RILA valuation & replication
+
+Create rila_payoff.py with:
+
+def rila_payoff(ST, S0, cap, buffer): # vectorized terminal payoff
+
+def rila_replication(S, K_grid, params):
+Return weights for a static vanilla option replication of the RILA (piecewise-linear cap/buffer). This enables fast re-valuation at t=1 under the chosen model without nested MC.
+
+B) Dynamic hedging engine (Heston/RoughVol)
+
+Create 12_dynamic_hedging.py:
+
+def run_dynamic_hedge(
+    model: str,                         # "heston" | "roughvol"
+    S_paths: np.ndarray,                # (n_paths, n_steps+1)
+    t_grid: np.ndarray,                 # years, aligned to S_paths
+    r_curve, q_curve,                   # callables or term structures
+    rila_params: dict,                  # {S0, T, cap, buffer, ...}
+    rebalance: str,                     # "daily" | "weekly" | "monthly"
+    trans_cost_bps: float = 0.0,        # proportional TC per notional
+    hedge_instruments: dict = {"delta": True, "vega": False},
+    seed: int = 42,
+) -> dict:
+    """
+    Returns:
+      {
+        "hedge_pnl": np.ndarray,       # (n_paths,)
+        "hedge_error": np.ndarray,     # liability change - hedge P&L
+        "trade_stats": dict,
+        "pathwise": dict,              # optional diagnostics
+      }
+    """
+
+
+Implementation notes:
+
+Hedge: At minimum delta-hedge with the underlying; optional vega-hedge via 1M ATM option.
+
+Greeks: Use bump-and-revalue on the replicated vanilla portfolio under the selected model (Carr–Madan Heston pricer; for RoughVol vanilla pricing, use implemented method or Heston-proxy approximation and document it).
+
+Rebalancing: Implement daily/weekly/monthly schedules on t_grid.
+
+Transaction costs: apply proportional bps to turnover and include in P&L.
+
+C) Solvency II SCR over one year
+
+Create 13_scr_one_year.py:
+
+def compute_one_year_scr(
+    model: str,
+    S_paths: np.ndarray,        # includes t=0..1y (and enough beyond to value BEL_1y)
+    t_grid: np.ndarray,
+    r_curve, q_curve,
+    rila_params: dict,
+    hedging_result: dict,       # from run_dynamic_hedge
+) -> dict:
+    """
+    Compute Δ Own Funds over 1 year:
+      OF_t = Assets_t - BEL_t
+      ΔOF = OF_1y - OF_0
+    Return: VaR_99.5, CTE_99.5 of (−ΔOF), plus summary stats.
+    """
+
+
+BEL_0: PV of RILA at t=0 (replication + model pricing).
+
+BEL_1: Re-value at t=1 (given S(1), remaining T−1, rolled r/q curves) under same model.
+
+Assets: Hedge cash + marked-to-market hedge positions at t=1 (include transaction costs).
+
+Metrics: VaR 99.5% (0.5th percentile) and CTE 99.5% of −ΔOF; also report mean and stdev.
+
+D) Calibration inputs & curves
+
+Refactor 6_heston_calibrate*.py to accept 
+𝑆
+0
+S
+0
+	​
+
+ and r(t), q(t) from data (no hard-coding).
+
+Add curves.py exposing r(t) and q(t) callables from cleaned curve files. Ensure the same curves feed pricing, hedging, and SCR.
+
+E) Experiment runner (models × frequencies)
+
+Create 14_run_experiments.py (CLI):
+
+Models: heston and roughvol only.
+
+Rebalance: daily, weekly, monthly.
+
+Output:
+
+results/scr_summary.csv with columns: model, rebalance, VaR_99.5, CTE_99.5, mean_dOF, stdev_dOF, mean_hedge_error, TC_bps.
+
+Plots in results/plots/: bar chart of VaR/CTE across models/frequencies; histogram of ΔOF per setup.
+
+Deterministic --seed, and JSON config snapshot per run.
+
+F) Minimal tests & docs
+
+Tests (e.g., tests/test_rila_replication.py, tests/test_scr_metrics.py):
+
+Replication matches brute-force MC within tolerance (under one model).
+
+VaR/CTE functions return correct quantiles on synthetic data.
+
+Update README.md section “How this answers the research question” to explain:
+
+Why 1-year ΔOF at 99.5% VaR/CTE equals the Solvency II SCR measure.
+
+How dynamic hedging under Heston vs RoughVol and rebalance frequency shifts the SCR.
+
+3) Commands to provide (make them work)
+# Prepare data & curves (as repo requires)
+python 2_clean_and_prepare.py
+python riskfree_clean_prepare.py
+
+# Calibrate Heston to a chosen snapshot (use real S0, r(t), q(t))
+python 6_heston_calibrate_de.py --date 2021-06-01 --save-params params/heston_20210601.json
+
+# Simulate 1-year paths (daily) for stochastic-vol models only
+python 8_simulate_spx_heston.py --out data/paths_heston_1y.npz --params params/heston_20210601.json --seed 42
+python 10_simulate_spx_roughvol.py --out data/paths_rough_1y.npz --seed 42
+
+# Run the grid: (heston, roughvol) × (daily, weekly, monthly)
+python 14_run_experiments.py \
+  --models heston roughvol \
+  --rebalance daily weekly monthly \
+  --n_paths 50000 --tc_bps 1.0 --seed 42
+
+4) Acceptance Criteria
+
+run_dynamic_hedge(...) returns finite arrays; higher rebalance frequency reduces hedge error (same model).
+
+compute_one_year_scr(...) outputs VaR_99.5 and CTE_99.5 for ΔOF over 1 year.
+
+results/scr_summary.csv contains both models × three frequencies with populated metrics.
+
+Re-running with the same seed reproduces results within Monte-Carlo error.
+
+README.md clearly links the implementation to the title and research question.
+
+5) Notes to document
+
+For RoughVol vanilla pricing, if a direct pricer isn’t present, use a Heston-proxy approximation and label the limitation.
+
+Keep all parameters (cap, buffer, maturity 
+𝑇
+T, rebalancing, TC) configurable and report them alongside results.
+
+Deliver the new/updated code, runnable commands, scr_summary.csv, plots, and README updates. Do not introduce GBM or non-VA products. Stay strictly within the dissertation scope above.
