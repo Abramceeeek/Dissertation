@@ -380,7 +380,7 @@ if __name__ == "__main__":
     params_df = pd.read_csv('Output/heston_calibrated_params_2018-06-01_DE.csv')
     params = params_df.iloc[0]
     v0, kappa, theta, sigma_v, rho = params['v0'], params['kappa'], params['theta'], params['sigma_v'], params['rho']
-    from heston_pricing_carr_madan import carr_madan_call_price
+    from Step23_Heston_Carr_Madan_Pricing import carr_madan_call_price
     price = carr_madan_call_price(
         S0=4500, K=4500, T=1.0, r=0.02, q=0.01,
         v0=v0, kappa=kappa, theta=theta, sigma_v=sigma_v, rho=rho
@@ -388,7 +388,7 @@ if __name__ == "__main__":
     print(f"[TEST] Carr-Madan price for ATM option (DE params): {price}")
 
     # Print characteristic function output for ATM test case
-    from heston_pricing_utils import heston_characteristic_function
+    from Step24_Heston_Pricing_Utilities import heston_characteristic_function
     phi = heston_characteristic_function(
         u=1.0,
         T=1.0,
