@@ -16,7 +16,7 @@ from scipy import stats
 # Add Code directory to path
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Code'))
 
-from Step26_Solvency_II_SCR_Calculation import calculate_var_cte, compute_one_year_scr
+from Step32_Solvency_II_SCR_Calculation import calculate_var_cte, compute_one_year_scr
 
 
 class TestVarCteCalculations:

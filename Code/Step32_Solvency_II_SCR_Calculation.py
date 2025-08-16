@@ -16,7 +16,8 @@ import pandas as pd
 from typing import Dict, Tuple, Union, Callable, Optional
 from scipy import stats
 import logging
-from Step23_RILA_Payoff_and_Replication import rila_pv, rila_payoff
+# from Step23_RILA_Payoff_and_Replication import rila_pv, rila_payoff  # Module not found
+from Step27_Variable_Annuity_Utils import apply_rila_payoff
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
