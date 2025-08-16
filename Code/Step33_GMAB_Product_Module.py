@@ -18,6 +18,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Code'))
 
 from Step22_Black_Scholes_Utils import bs_price_call
 from Step23_Heston_Carr_Madan_Pricing import carr_madan_call_price
+from Step24_Heston_Pricing_Utilities import heston_call_price
 
 @dataclass
 class GMABParams:
@@ -92,7 +93,7 @@ def gmab_value_and_delta(
         bump_size: Bump size for delta calculation (1% default)
     
     Returns:
-        (value, delta): GMAB value and delta
+        (value, delta): GMAB value and delta (delta in stock units)
     """
     if T <= 0:
         # At maturity: payoff = max(G - A_T, 0)
@@ -100,56 +101,67 @@ def gmab_value_and_delta(
         payoff = max(G - A, 0.0)
         return payoff, 0.0
     
-    # Calculate effective strike: G/A_t ratio gives us the strike for put on normalized account
+    # Calculate effective strike in account-normalized units
     G = A * (1 + gmab_params.g_annual) ** gmab_params.T_years
     effective_strike = G / A  # Strike in terms of account performance
     
-    # Since account follows stock (adjusted for fees), we can price as put on stock
-    # with adjusted strike accounting for fee impact
+    # Adjust strike to account for remaining fee drag over horizon T
     remaining_fees = np.exp(-gmab_params.fee_annual * T)
     adjusted_strike = effective_strike / remaining_fees
     
+    # Price on normalized underlying (S_norm = 1), then scale by A
+    S_norm = 1.0
+    S_up_norm = S_norm * (1 + bump_size)
+    
     if model == 'bs':
-        # Black-Scholes put value = Call(K) - S + K*exp(-rT)  [put-call parity]
-        call_value = bs_price_call(S, adjusted_strike, T, r, q, 0.2)  # Default vol = 20%
-        put_value = call_value - S * np.exp(-q * T) + adjusted_strike * np.exp(-r * T)
+        # Black-Scholes call and put via put-call parity on normalized underlying
+        call_value_norm = bs_price_call(S_norm, adjusted_strike, T, r, q, 0.2)
+        put_value_norm = call_value_norm - S_norm * np.exp(-q * T) + adjusted_strike * np.exp(-r * T)
         
-        # Delta calculation via bump-and-revalue
-        S_up = S * (1 + bump_size)
-        call_value_up = bs_price_call(S_up, adjusted_strike, T, r, q, 0.2)
-        put_value_up = call_value_up - S_up * np.exp(-q * T) + adjusted_strike * np.exp(-r * T)
-        
-        delta = (put_value_up - put_value) / (S_up - S)
-        
+        # Delta in normalized units
+        call_value_up_norm = bs_price_call(S_up_norm, adjusted_strike, T, r, q, 0.2)
+        put_value_up_norm = call_value_up_norm - S_up_norm * np.exp(-q * T) + adjusted_strike * np.exp(-r * T)
+        delta_norm = (put_value_up_norm - put_value_norm) / (S_up_norm - S_norm)
+    
     elif model == 'heston':
         if heston_params is None:
             raise ValueError("Heston parameters required for Heston pricing")
         
-        # Heston call value
-        call_value = carr_madan_call_price(
-            S, adjusted_strike, T, r, q,
+        # Prefer stable quadrature-based Heston pricer on normalized underlying
+        call_value_norm = heston_call_price(
+            S_norm, adjusted_strike, T, r, q,
             heston_params['v0'], heston_params['kappa'], heston_params['theta'],
             heston_params['sigma_v'], heston_params['rho']
         )
-        put_value = call_value - S * np.exp(-q * T) + adjusted_strike * np.exp(-r * T)
+        if call_value_norm <= 0:
+            # Fallback to Carr-Madan if needed
+            call_value_norm = carr_madan_call_price(
+                S_norm, adjusted_strike, T, r, q,
+                heston_params['v0'], heston_params['kappa'], heston_params['theta'],
+                heston_params['sigma_v'], heston_params['rho']
+            )
+        put_value_norm = call_value_norm - S_norm * np.exp(-q * T) + adjusted_strike * np.exp(-r * T)
         
-        # Delta via bump-and-revalue
-        S_up = S * (1 + bump_size)
-        call_value_up = carr_madan_call_price(
-            S_up, adjusted_strike, T, r, q,
+        call_value_up_norm = heston_call_price(
+            S_up_norm, adjusted_strike, T, r, q,
             heston_params['v0'], heston_params['kappa'], heston_params['theta'],
             heston_params['sigma_v'], heston_params['rho']
         )
-        put_value_up = call_value_up - S_up * np.exp(-q * T) + adjusted_strike * np.exp(-r * T)
-        
-        delta = (put_value_up - put_value) / (S_up - S)
-        
+        if call_value_up_norm <= 0:
+            call_value_up_norm = carr_madan_call_price(
+                S_up_norm, adjusted_strike, T, r, q,
+                heston_params['v0'], heston_params['kappa'], heston_params['theta'],
+                heston_params['sigma_v'], heston_params['rho']
+            )
+        put_value_up_norm = call_value_up_norm - S_up_norm * np.exp(-q * T) + adjusted_strike * np.exp(-r * T)
+        delta_norm = (put_value_up_norm - put_value_norm) / (S_up_norm - S_norm)
+    
     else:
         raise ValueError(f"Unknown model: {model}")
     
-    # Scale by lambda and account size
-    scaled_value = lambda_scale * A * max(put_value, 0.0)
-    scaled_delta = lambda_scale * A * delta
+    # Scale value by account size and convert delta to stock units via chain rule
+    scaled_value = lambda_scale * A * max(put_value_norm, 0.0)
+    scaled_delta = lambda_scale * (A / max(S, 1e-12)) * delta_norm
     
     return scaled_value, scaled_delta
 
