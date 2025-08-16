@@ -164,7 +164,7 @@ def run_gmab_simulation_heston():
         
         # Calculate payoffs
         maturity_payoff = gmab_maturity_payoff(
-            final_A / S[0, path], gmab_params, initial_premium
+            final_A, gmab_params, initial_premium
         )
         
         # Store results

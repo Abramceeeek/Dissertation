@@ -100,26 +100,31 @@ def gmab_value_and_delta(
         payoff = max(G - A, 0.0)
         return payoff, 0.0
     
-    # Calculate effective strike: G/A_t ratio gives us the strike for put on normalized account
-    G = A * (1 + gmab_params.g_annual) ** gmab_params.T_years
-    effective_strike = G / A  # Strike in terms of account performance
+    # For a GMAB, the guaranteed amount at maturity is the initial premium
+    # accumulated at the guaranteed rate for the full contract term
+    G_maturity = A * (1 + gmab_params.g_annual) ** gmab_params.T_years
     
-    # Since account follows stock (adjusted for fees), we can price as put on stock
-    # with adjusted strike accounting for fee impact
-    remaining_fees = np.exp(-gmab_params.fee_annual * T)
-    adjusted_strike = effective_strike / remaining_fees
+    # The current guaranteed amount is the present value of the maturity guarantee
+    # discounted at the risk-free rate
+    G = G_maturity * np.exp(-r * (gmab_params.T_years - T))
+    
+    # The GMAB payoff is max(G - A_T, 0), which is a put option on the account value
+    # with strike G. We can price this as a put option on the normalized account value
+    # (account value / initial premium) with strike G/A.
+    normalized_strike = G / A  # Strike in normalized account value units
     
     if model == 'bs':
-        # Black-Scholes put value = Call(K) - S + K*exp(-rT)  [put-call parity]
-        call_value = bs_price_call(S, adjusted_strike, T, r, q, 0.2)  # Default vol = 20%
-        put_value = call_value - S * np.exp(-q * T) + adjusted_strike * np.exp(-r * T)
+        # Price put option on normalized account value (S/A = 1)
+        # with strike normalized_strike
+        call_value = bs_price_call(1.0, normalized_strike, T, r, q, 0.2)  # Default vol = 20%
+        put_value = call_value - 1.0 * np.exp(-q * T) + normalized_strike * np.exp(-r * T)
         
         # Delta calculation via bump-and-revalue
-        S_up = S * (1 + bump_size)
-        call_value_up = bs_price_call(S_up, adjusted_strike, T, r, q, 0.2)
-        put_value_up = call_value_up - S_up * np.exp(-q * T) + adjusted_strike * np.exp(-r * T)
+        S_up = 1.0 * (1 + bump_size)
+        call_value_up = bs_price_call(S_up, normalized_strike, T, r, q, 0.2)
+        put_value_up = call_value_up - S_up * np.exp(-q * T) + normalized_strike * np.exp(-r * T)
         
-        delta = (put_value_up - put_value) / (S_up - S)
+        delta = (put_value_up - put_value) / (S_up - 1.0)
         
     elif model == 'heston':
         if heston_params is None:
@@ -127,22 +132,22 @@ def gmab_value_and_delta(
         
         # Heston call value
         call_value = carr_madan_call_price(
-            S, adjusted_strike, T, r, q,
+            1.0, normalized_strike, T, r, q,
             heston_params['v0'], heston_params['kappa'], heston_params['theta'],
             heston_params['sigma_v'], heston_params['rho']
         )
-        put_value = call_value - S * np.exp(-q * T) + adjusted_strike * np.exp(-r * T)
+        put_value = call_value - 1.0 * np.exp(-q * T) + normalized_strike * np.exp(-r * T)
         
         # Delta via bump-and-revalue
-        S_up = S * (1 + bump_size)
+        S_up = 1.0 * (1 + bump_size)
         call_value_up = carr_madan_call_price(
-            S_up, adjusted_strike, T, r, q,
+            S_up, normalized_strike, T, r, q,
             heston_params['v0'], heston_params['kappa'], heston_params['theta'],
             heston_params['sigma_v'], heston_params['rho']
         )
-        put_value_up = call_value_up - S_up * np.exp(-q * T) + adjusted_strike * np.exp(-r * T)
+        put_value_up = call_value_up - S_up * np.exp(-q * T) + normalized_strike * np.exp(-r * T)
         
-        delta = (put_value_up - put_value) / (S_up - S)
+        delta = (put_value_up - put_value) / (S_up - 1.0)
         
     else:
         raise ValueError(f"Unknown model: {model}")
