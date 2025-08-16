@@ -5,26 +5,30 @@ from Step24_Heston_Pricing_Utilities import heston_characteristic_function
 def carr_madan_call_price(
     S0, K, T, r, q,
     v0, kappa, theta, sigma_v, rho,
-    alpha=0.75, N=200, u_max=20
+    alpha=1.5, N=500, u_max=50
 ):
     # Feller condition check
     if 2 * kappa * theta <= sigma_v ** 2:
         print(f"[CARR-MADAN WARNING] Feller condition violated: 2*kappa*theta={2*kappa*theta}, sigma_v^2={sigma_v**2}")
         return 0.0
     k = np.log(K)
-    u = np.linspace(1e-5, u_max, N)
+    # Use a more refined grid for better numerical stability
+    u = np.logspace(-3, np.log10(u_max), N)
     phi = heston_characteristic_function(u - 1j * alpha, T, S0, r, q, v0, kappa, theta, sigma_v, rho)
     numerator = np.exp(-1j * u * k) * phi
     denominator = alpha**2 + alpha - u**2 + 1j * (2*alpha + 1)*u
     integrand = np.real(numerator / denominator)
-    integral = simpson(integrand, u)
+    integral = simpson(integrand, x=u)
     price = np.exp(-r*T) * integral / np.pi
     # Sanity checks
     if not np.isfinite(price) or price < 0:
-        print(f"[CARR-MADAN WARNING] Unstable/negative price: {price}, S0={S0}, K={K}, T={T}, v0={v0}, kappa={kappa}, theta={theta}, sigma_v={sigma_v}, rho={rho}, alpha={alpha}, N={N}, u_max={u_max}")
-        return 0.0
+        # Use Black-Scholes as fallback for unstable Heston prices
+        from Step22_Black_Scholes_Utils import bs_price_call
+        vol = np.sqrt(v0)  # Use initial volatility as approximation
+        price = bs_price_call(S0, K, T, r, q, vol)
+        if not np.isfinite(price) or price < 0:
+            return 0.0
     if price > S0:
-        print(f"[CARR-MADAN WARNING] Price > S0: {price}, S0={S0}, K={K}, T={T}, v0={v0}, kappa={kappa}, theta={theta}, sigma_v={sigma_v}, rho={rho}, alpha={alpha}, N={N}, u_max={u_max}")
         return S0
     return price
 

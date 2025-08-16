@@ -1,3 +1,2 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:4a40b58956ef24a8dd41005bf7f5a3edf97ea4140349dbdb731de3ff0ff29156
-size 679
+Model,Contract,Paths,T_years,Guarantee_Rate,Management_Fee,Transaction_Cost_bps,Rebalance_Freq_days,Risk_Free_Rate,Dividend_Yield,Heston_v0,Heston_kappa,Heston_theta,Heston_sigma_v,Heston_rho,Unhedged_Mean_PnL,Unhedged_Std_PnL,Unhedged_VaR_99_5,Unhedged_CTE_99_5,Unhedged_Min_PnL,Unhedged_Max_PnL,Hedged_Mean_PnL,Hedged_Std_PnL,Hedged_VaR_99_5,Hedged_CTE_99_5,Hedged_Min_PnL,Hedged_Max_PnL,Avg_Transaction_Cost,Hedge_Effectiveness,Seed
+Heston,GMAB,10000,7.0,0.03,0.015,10.0,7,0.02,0.015,0.04,2.0,0.04,0.3,-0.7,-0.38602383734955914,0.32198586874367346,-1.082957278315526,-1.1130906808846066,-1.1952047598393598,-0.0,-969919.0150151408,12416065.730636204,-60614628.63360635,-80143072.92329818,-184328276.80681893,13735318.685109474,256131.24969585318,-38560901.62309116,42
