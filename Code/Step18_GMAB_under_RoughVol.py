@@ -93,6 +93,8 @@ def run_gmab_simulation_roughvol():
     print("Simulating Rough Volatility paths...")
     mu = r - q  # Risk-neutral drift
     S, _ = simulate_rough_vol(S0, mu, T, int(N), n_paths, roughvol_params, seed=seed)
+    if S.shape[0] != int(N) + 1 or S.shape[1] != n_paths:
+        print(f"[WARNING] Unexpected S shape: {S.shape}, expected ({int(N)+1}, {n_paths})")
     # S is already in (n_steps+1, n_paths) format from simulate_rough_vol
     
     print(f"Initial price: ${S[0, 0]:.2f}")
@@ -172,7 +174,7 @@ def run_gmab_simulation_roughvol():
         
         # Calculate payoffs
         maturity_payoff = gmab_maturity_payoff(
-            final_A / initial_premium, gmab_params, initial_premium
+            final_A, gmab_params, S[0, path]
         )
         
         # Store results
@@ -199,9 +201,9 @@ def run_gmab_simulation_roughvol():
         'Rebalance_Freq_days': rebalance_freq,
         'Risk_Free_Rate': r,
         'Dividend_Yield': q,
-        'RoughVol_xi0': roughvol_params['xi0'],
-        'RoughVol_eta': roughvol_params['eta'],
-        'RoughVol_H': roughvol_params['H'],
+        'RoughVol_xi': roughvol_params['xi'],
+'RoughVol_nu': roughvol_params['nu'],
+'RoughVol_H': roughvol_params['H'],
         # Unhedged metrics
         'Unhedged_Mean_PnL': unhedged_metrics['mean_pnl'],
         'Unhedged_Std_PnL': unhedged_metrics['std_pnl'], 
