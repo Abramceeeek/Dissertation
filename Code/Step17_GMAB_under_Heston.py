@@ -22,12 +22,18 @@ import sys
 sys.path.append('.')
 # Add paths for imports
 sys.path.append('Code')
-sys.path.append('products')
 
 # Import configuration and modules
 from Step00_Configuration import *
 from Step33_GMAB_Product_Module import GMABParams, evolve_account_from_prices, gmab_value_and_delta, gmab_maturity_payoff
 from Step14_Heston_Simulation import simulate_heston
+
+def get_rebalance_times(N, rebalance_freq):
+    """Get rebalancing time indices."""
+    times = list(range(0, N, rebalance_freq))
+    if N not in times:
+        times.append(N)
+    return [min(t, N-1) for t in times]
 
 def load_market_data():
     """Load risk-free rate and dividend yield data."""
@@ -164,7 +170,7 @@ def run_gmab_simulation_heston():
         
         # Calculate payoffs
         maturity_payoff = gmab_maturity_payoff(
-            final_A / S[0, path], gmab_params, initial_premium
+            final_A, gmab_params, initial_premium
         )
         
         # Store results
