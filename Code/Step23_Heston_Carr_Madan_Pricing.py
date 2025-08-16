@@ -17,7 +17,7 @@ def carr_madan_call_price(
     numerator = np.exp(-1j * u * k) * phi
     denominator = alpha**2 + alpha - u**2 + 1j * (2*alpha + 1)*u
     integrand = np.real(numerator / denominator)
-    integral = simpson(integrand, u)
+    integral = simpson(integrand, x=u)
     price = np.exp(-r*T) * integral / np.pi
     # Sanity checks
     if not np.isfinite(price) or price < 0:

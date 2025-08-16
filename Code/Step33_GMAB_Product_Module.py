@@ -111,13 +111,14 @@ def gmab_value_and_delta(
     
     if model == 'bs':
         # Black-Scholes put value = Call(K) - S + K*exp(-rT)  [put-call parity]
-        call_value = bs_price_call(S, adjusted_strike, T, r, q, 0.2)  # Default vol = 20%
-        put_value = call_value - S * np.exp(-q * T) + adjusted_strike * np.exp(-r * T)
+        strike_price = S * adjusted_strike  # Convert ratio to actual strike price
+        call_value = bs_price_call(S, strike_price, T, r, q, 0.2)  # Default vol = 20%
+        put_value = call_value - S * np.exp(-q * T) + strike_price * np.exp(-r * T)
         
         # Delta calculation via bump-and-revalue
         S_up = S * (1 + bump_size)
-        call_value_up = bs_price_call(S_up, adjusted_strike, T, r, q, 0.2)
-        put_value_up = call_value_up - S_up * np.exp(-q * T) + adjusted_strike * np.exp(-r * T)
+        call_value_up = bs_price_call(S_up, strike_price, T, r, q, 0.2)
+        put_value_up = call_value_up - S_up * np.exp(-q * T) + strike_price * np.exp(-r * T)
         
         delta = (put_value_up - put_value) / (S_up - S)
         
@@ -126,30 +127,31 @@ def gmab_value_and_delta(
             raise ValueError("Heston parameters required for Heston pricing")
         
         # Heston call value
+        strike_price = S * adjusted_strike  # Convert ratio to actual strike price
         call_value = carr_madan_call_price(
-            S, adjusted_strike, T, r, q,
+            S, strike_price, T, r, q,
             heston_params['v0'], heston_params['kappa'], heston_params['theta'],
             heston_params['sigma_v'], heston_params['rho']
         )
-        put_value = call_value - S * np.exp(-q * T) + adjusted_strike * np.exp(-r * T)
+        put_value = call_value - S * np.exp(-q * T) + strike_price * np.exp(-r * T)
         
         # Delta via bump-and-revalue
         S_up = S * (1 + bump_size)
         call_value_up = carr_madan_call_price(
-            S_up, adjusted_strike, T, r, q,
+            S_up, strike_price, T, r, q,
             heston_params['v0'], heston_params['kappa'], heston_params['theta'],
             heston_params['sigma_v'], heston_params['rho']
         )
-        put_value_up = call_value_up - S_up * np.exp(-q * T) + adjusted_strike * np.exp(-r * T)
+        put_value_up = call_value_up - S_up * np.exp(-q * T) + strike_price * np.exp(-r * T)
         
         delta = (put_value_up - put_value) / (S_up - S)
         
     else:
         raise ValueError(f"Unknown model: {model}")
     
-    # Scale by lambda and account size
-    scaled_value = lambda_scale * A * max(put_value, 0.0)
-    scaled_delta = lambda_scale * A * delta
+    # Scale by lambda (the put value is already for the full account)
+    scaled_value = lambda_scale * max(put_value, 0.0)
+    scaled_delta = lambda_scale * delta
     
     return scaled_value, scaled_delta
 
@@ -165,8 +167,9 @@ def gmab_maturity_payoff(A_T: float, gmab_params: GMABParams, initial_premium: f
     Returns:
         payoff: Top-up amount = max(G - A_T, 0) where G is the guaranteed amount
     """
+    # The guaranteed amount should be based on the initial premium
     G = initial_premium * (1 + gmab_params.g_annual) ** gmab_params.T_years
-    payoff = max(G - A_T, 0.0)  # Fixed: G - A_T, not G - initial_premium * A_T
+    payoff = max(G - A_T, 0.0)
     return payoff
 
 if __name__ == "__main__":
