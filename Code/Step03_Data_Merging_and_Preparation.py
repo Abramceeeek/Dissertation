@@ -39,9 +39,11 @@ def merge_spx_option_data():
     # Define the data folder and input files
     folder = 'Data/SPX Option Chain/'
     files = [
-        'SPX_Options_Data_2018.csv',      # Stable market conditions
-        'SPX_Options_Data_2019.csv',      # Pre-pandemic growth
-        'SPX_Options_Data_2020_to_2023.csv'  # Pandemic and recovery period
+        'SPX_Options_Data_2018.csv',
+        'SPX_Options_Data_2019.csv',
+        'SPX_Options_Data_2021.csv',
+        'SPX_Options_Data_2022.csv',
+        'SPX_Options_Data_2023.csv'
     ]
     
     print("=== S&P 500 Option Data Merging Process ===")

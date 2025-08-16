@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 from scipy.optimize import differential_evolution
-from heston_pricing_utils import heston_call_price
-from bs_utils import bs_implied_vol
+from Step17_Heston_Pricing_Utilities import heston_call_price
+from Step15_Black_Scholes_Utils import bs_implied_vol
 
 snapshot_date = '2018-06-01'
 market_data = pd.read_csv(f'Data/SPX_Snapshot_{snapshot_date}.csv')

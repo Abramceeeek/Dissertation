@@ -13,9 +13,9 @@ import pandas as pd
 from typing import Dict, Tuple, Union, Callable, Optional
 from scipy.interpolate import interp1d
 import logging
-from rila_payoff import rila_pv, rila_greeks, rila_replication
-from heston_pricing_carr_madan import heston_call_price
-from heston_pricing_utils import heston_put_price
+from Step23_RILA_Payoff_and_Replication import rila_pv, rila_greeks, rila_replication
+from Step16_Heston_Carr_Madan_Pricing import heston_call_price
+from Step17_Heston_Pricing_Utilities import heston_put_price
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

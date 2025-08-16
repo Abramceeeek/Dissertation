@@ -12,7 +12,7 @@ os.makedirs('Output/surfaces', exist_ok=True)
 os.makedirs('Output/logs', exist_ok=True)
 
 dates = df_all['date'].unique()
-print(f"🔄 Processing {len(dates)} unique snapshot dates...\n")
+print(f"Processing {len(dates)} unique snapshot dates...\n")
 
 for snapshot_date in dates:
     df = df_all[df_all['date'] == snapshot_date].copy()

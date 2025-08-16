@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.integrate import simpson
-from heston_pricing_utils import heston_characteristic_function
+from Step17_Heston_Pricing_Utilities import heston_characteristic_function
 
 def carr_madan_call_price(
     S0, K, T, r, q,
