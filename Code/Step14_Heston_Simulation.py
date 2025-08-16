@@ -92,7 +92,7 @@ if __name__ == "__main__":
     # Test Heston simulation
     import sys
     sys.path.append('.')
-    from config import S0, n_paths, T, N, heston_params, seed
+    from Step00_Configuration import S0, n_paths, T, N, heston_params, seed
     
     print("Simulating SPX paths under Heston model...")
     S, v = simulate_heston(S0, 0.005, T, N, n_paths, heston_params, seed)

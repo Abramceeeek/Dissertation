@@ -25,9 +25,9 @@ sys.path.append('Code')
 sys.path.append('products')
 
 # Import configuration and modules
-from config import *
-from Code.Step27_GMAB_Product_Module import GMABParams, evolve_account_from_prices, gmab_value_and_delta, gmab_maturity_payoff
-from Code.Step10_Heston_Simulation import simulate_heston
+from Step00_Configuration import *
+from Step33_GMAB_Product_Module import GMABParams, evolve_account_from_prices, gmab_value_and_delta, gmab_maturity_payoff
+from Step14_Heston_Simulation import simulate_heston
 
 def load_market_data():
     """Load risk-free rate and dividend yield data."""
@@ -87,7 +87,8 @@ def run_gmab_simulation_heston():
     print("Simulating Heston paths...")
     mu = r - q  # Risk-neutral drift
     S, V = simulate_heston(S0, mu, T, int(N), n_paths, heston_params, seed=seed)
-    S = S.T  # Transpose to (n_steps+1, n_paths) format
+    assert S.shape[0] == int(N) + 1, f"Expected time dimension {int(N)+1}, got {S.shape}"
+    assert S.shape[1] == n_paths,    f"Expected n_paths {n_paths}, got {S.shape[1]}"
     
     print(f"Initial price: ${S[0, 0]:.2f}")
     print(f"Average final price: ${np.mean(S[-1, :]):.2f}")
@@ -163,7 +164,7 @@ def run_gmab_simulation_heston():
         
         # Calculate payoffs
         maturity_payoff = gmab_maturity_payoff(
-            final_A / initial_premium, gmab_params, initial_premium
+            final_A / S[0, path], gmab_params, initial_premium
         )
         
         # Store results

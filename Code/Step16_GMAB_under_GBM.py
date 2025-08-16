@@ -22,9 +22,9 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Import configuration and modules
-from config import *
-from Code.Step27_GMAB_Product_Module import GMABParams, evolve_account_from_prices, gmab_value_and_delta, gmab_maturity_payoff
-from Code.Step09_GBM_Simulation import simulate_gbm
+from Step00_Configuration import *
+from Step33_GMAB_Product_Module import GMABParams, evolve_account_from_prices, gmab_value_and_delta, gmab_maturity_payoff
+from Step13_GBM_Simulation import simulate_gbm
 
 # Output directories
 results_dir = "Output/results"

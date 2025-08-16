@@ -24,9 +24,9 @@ sys.path.append('.')
 sys.path.append('Code')
 
 # Import configuration and modules
-from config import *
-from Code.Step27_GMAB_Product_Module import GMABParams, evolve_account_from_prices, gmab_value_and_delta, gmab_maturity_payoff
-from Code.Step11_Rough_Volatility_Simulation import simulate_rough_vol
+from Step00_Configuration import *
+from Step33_GMAB_Product_Module import GMABParams, evolve_account_from_prices, gmab_value_and_delta, gmab_maturity_payoff
+from Step15_Rough_Volatility_Simulation import simulate_rough_vol
 
 def load_market_data():
     """Load risk-free rate and dividend yield data."""
@@ -199,9 +199,9 @@ def run_gmab_simulation_roughvol():
         'Rebalance_Freq_days': rebalance_freq,
         'Risk_Free_Rate': r,
         'Dividend_Yield': q,
-        'RoughVol_xi0': rough_vol_params['xi0'],
-        'RoughVol_eta': rough_vol_params['eta'],
-        'RoughVol_H': rough_vol_params['H'],
+        'RoughVol_xi0': roughvol_params['xi0'],
+        'RoughVol_eta': roughvol_params['eta'],
+        'RoughVol_H': roughvol_params['H'],
         # Unhedged metrics
         'Unhedged_Mean_PnL': unhedged_metrics['mean_pnl'],
         'Unhedged_Std_PnL': unhedged_metrics['std_pnl'], 

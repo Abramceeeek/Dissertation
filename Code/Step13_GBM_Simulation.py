@@ -7,7 +7,7 @@ import sys
 # Add parent directory to path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from config import S0, n_paths, T, N, gbm_params, seed
+from Step00_Configuration import S0, n_paths, T, N, gbm_params, seed
 
 def simulate_gbm(S0, mu, sigma, T, N, n_paths, seed=None):
     if seed is not None:

@@ -3,9 +3,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import os
 from scipy.optimize import minimize
-from heston_pricing_carr_madan import carr_madan_call_price
-from bs_utils import bs_implied_vol, bs_price_call
-from heston_pricing_utils import heston_characteristic_function, heston_call_price
+from Step23_Heston_Carr_Madan_Pricing import carr_madan_call_price
+from Step22_Black_Scholes_Utils import bs_implied_vol, bs_price_call
+from Step24_Heston_Pricing_Utilities import heston_characteristic_function, heston_call_price
 
 def validate_heston_calibration(snapshot_date='2018-06-01', params_file=None, use_stable_heston=True):
     print(f"Validating Heston calibration for {snapshot_date}... (Stable pricer: {use_stable_heston})")

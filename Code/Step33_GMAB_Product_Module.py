@@ -16,8 +16,8 @@ import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'Code'))
 
-from Step15_Black_Scholes_Utils import bs_price_call
-from Step16_Heston_Carr_Madan_Pricing import carr_madan_call_price
+from Step22_Black_Scholes_Utils import bs_price_call
+from Step23_Heston_Carr_Madan_Pricing import carr_madan_call_price
 
 @dataclass
 class GMABParams:

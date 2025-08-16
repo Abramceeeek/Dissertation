@@ -18,7 +18,7 @@ import sys
 # Add parent directory to path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from config import S0, n_paths, T, N, roughvol_params, seed
+from Step00_Configuration import S0, n_paths, T, N, roughvol_params, seed
 from scipy.special import gamma
 
 def simulate_rough_vol(S0, mu, T, N, n_paths, roughvol_params, seed=None):
