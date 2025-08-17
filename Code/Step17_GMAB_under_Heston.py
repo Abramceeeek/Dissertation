@@ -104,6 +104,16 @@ def run_gmab_simulation_heston():
     print("Calculating account evolution...")
     A = evolve_account_from_prices(S, gmab_params.fee_annual, dt_years)
     
+    # Normalize account to per-unit of premium (ratio)
+    # Use existing initial_premium if defined in your config; else fall back to S0.
+    try:
+        initial_premium
+    except NameError:
+        initial_premium = S0  # fallback consistent with Step16
+
+    A_ratio = A / float(initial_premium)
+
+
     # Dynamic hedging simulation
     print("Running dynamic hedging simulation...")
     
@@ -131,47 +141,44 @@ def run_gmab_simulation_heston():
             T_remain = T - t
             
             current_S = S[t_idx, path]
-            current_A = A[t_idx, path]
-            
-            # Calculate GMAB value and delta
-            value, delta = gmab_value_and_delta(
+            current_A_ratio = A_ratio[t_idx, path]
+            value, delta_per_unit = gmab_value_and_delta(
                 S=current_S,
-                A=current_A, 
+                A=current_A_ratio,
                 T=T_remain,
-                r=r,
-                q=q,
+                r=r, q=q,
                 gmab_params=gmab_params,
                 model='heston',
                 heston_params=heston_params
             )
-            
-            # Calculate delta change and transaction costs
-            delta_change = delta - prev_delta
-            trade_notional = abs(delta_change * current_S)
+
+            # Convert per-unit delta to SHARES for trading
+            shares_needed = delta_per_unit * initial_premium
+            shares_change = shares_needed - prev_shares
+
+            trade_notional = abs(shares_change) * current_S
             path_trans_cost += trade_notional * (trans_cost_bps / 10000)
-            
-            # Update hedge P&L from stock position
+
             if i > 0:
                 prev_S = S[rebalance_times[i-1], path]
-                stock_pnl = prev_delta * (current_S - prev_S)
+                stock_pnl = prev_shares * (current_S - prev_S)
                 path_hedge_pnl += stock_pnl
-            
-            prev_delta = delta
+
+            prev_shares = shares_needed
+
         
         # Final settlement at maturity
         final_S = S[-1, path]
-        final_A = A[-1, path]
+        final_A_ratio = A_ratio[-1, path]
         
         # Final hedge P&L
         if len(rebalance_times) > 1:
             prev_S = S[rebalance_times[-2], path]  
-            stock_pnl = prev_delta * (final_S - prev_S)
+            stock_pnl = prev_shares * (final_S - prev_S)
             path_hedge_pnl += stock_pnl
         
         # Calculate payoffs
-        maturity_payoff = gmab_maturity_payoff(
-            final_A, gmab_params, initial_premium
-        )
+        maturity_payoff = gmab_maturity_payoff(final_A_ratio, gmab_params, initial_premium)
         
         # Store results
         unhedged_pnl[path] = -maturity_payoff  # Negative for insurer perspective
@@ -218,7 +225,10 @@ def run_gmab_simulation_heston():
         'Hedged_Max_PnL': hedged_metrics['max_pnl'],
         # Additional metrics
         'Avg_Transaction_Cost': np.mean(transaction_costs),
-        'Hedge_Effectiveness': 1 - hedged_metrics['std_pnl'] / unhedged_metrics['std_pnl'],
+        'Hedge_Effectiveness': (
+            np.nan if abs(unhedged_metrics['std_pnl']) < 1e-12
+            else 1 - hedged_metrics['std_pnl'] / unhedged_metrics['std_pnl']
+        ),
         'Seed': seed
     }
     
