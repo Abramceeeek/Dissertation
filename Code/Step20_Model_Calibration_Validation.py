@@ -388,7 +388,7 @@ if __name__ == "__main__":
     print(f"[TEST] Carr-Madan price for ATM option (DE params): {price}")
 
     # Print characteristic function output for ATM test case
-    from heston_pricing_utils import heston_characteristic_function
+    from Step24_Heston_Pricing_Utilities import heston_characteristic_function
     phi = heston_characteristic_function(
         u=1.0,
         T=1.0,

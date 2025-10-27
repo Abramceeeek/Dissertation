@@ -1,5 +1,6 @@
 import numpy as np
-from rila.payoff import apply_rila_payoff
+# from rila.payoff import apply_rila_payoff  # Module not found
+from Step27_Variable_Annuity_Utils import apply_rila_payoff
 
 def test_rila_payoff_positive_within_cap():
     returns = np.array([0.05, 0.10, 0.20])

@@ -172,7 +172,7 @@ def run_gmab_simulation_roughvol():
         
         # Calculate payoffs
         maturity_payoff = gmab_maturity_payoff(
-            final_A / initial_premium, gmab_params, initial_premium
+            final_A, gmab_params, initial_premium
         )
         
         # Store results
@@ -199,8 +199,8 @@ def run_gmab_simulation_roughvol():
         'Rebalance_Freq_days': rebalance_freq,
         'Risk_Free_Rate': r,
         'Dividend_Yield': q,
-        'RoughVol_xi0': roughvol_params['xi0'],
-        'RoughVol_eta': roughvol_params['eta'],
+        'RoughVol_xi': roughvol_params['xi'],
+        'RoughVol_nu': roughvol_params['nu'],
         'RoughVol_H': roughvol_params['H'],
         # Unhedged metrics
         'Unhedged_Mean_PnL': unhedged_metrics['mean_pnl'],

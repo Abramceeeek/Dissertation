@@ -24,7 +24,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # Import configuration
-from VA_Configuration import *
+from Step00_Configuration import *
 
 def simulate_gbm_paths(S0, T, N, n_paths, r, sigma, q=0, seed=None):
     """
